@@ -1,0 +1,16 @@
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.loa
+*.out
+*.synctex.gz
+*.glg
+*.glo
+*.gls
+*.ist
+*.toc
+*.xdy
+*.pdf
+!notes.pdf
+*.1

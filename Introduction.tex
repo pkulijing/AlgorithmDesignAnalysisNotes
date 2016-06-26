@@ -1,0 +1,151 @@
+\ifx\PREAMBLE\undefined
+\input{preamble}
+\begin{document}
+\fi
+\chapter{Introduction}
+\section{Warmup: Integer Multiplication Problem}
+\subsection{The Primary School Approach}
+Consider the integer multiplication algorithm that everyone learned in primary school.
+\begin{description}
+\item[Input]two n-digit numbers $x$ and $y$.
+\item[Output]the product $x\times y$.
+\end{description}
+We will assess its performance by counting the number of \textbf{primitive operations}, here being the addition or multiplication of two single-digit numbers, required to carry it out. In this case, it is clearly $\Theta(n^2)$. It might have been taken for granted that this is the unique, or at least optimal approach, while actually it isn't. As Aho, Hopcroft and Ullman put it in their 1974 book \emph{The Design and Analysis of Computer Algorithms}, ``Perhaps the most important principle for the good algorithm designer is to refuse to be content.'' Always be ready to ask yourself the question: CAN WE DO BETTER?
+\subsection{Karatsuba Multiplication}
+Consider the calculation of $5678\times1234$. We will note $a = 56, b = 78, c = 12$ and $d = 34$. The calculation can be carried out with the following steps:
+\begin{enumerate}
+\item Calculate $a\cdot c = 672$;
+\item Calculate $b\cdot d = 2652$;
+\item Calculate $(a+b)(c+d) = 134\times46 = 6164$;
+\item Calculate \textcircled{\raisebox{-.9pt}{3}} - \textcircled{\raisebox{-.9pt}{2}} - \textcircled{\raisebox{-.9pt}{1}} = 2840;
+\item Calculate \textcircled{\raisebox{-.9pt}{1}}$\times$10000 + \textcircled{\raisebox{-.9pt}{4}}$\times$100 + \textcircled{\raisebox{-.9pt}{2}} = 6720000 + 284000 + 2652 = 7006652.
+\end{enumerate}
+The procedure here can be formalized into a recursive algorithm to calculate $x\times y$. Write $x=10^{n/2}a + b$ and $y=10^{n/2}c + d$. Obviously we have $xy=10^nac +\allowbreak 10^{n/2}(ad+bc) +\allowbreak bd =\allowbreak 10^nac + 10^{n/2}((a+b)(c+d)-ac-bd) + bd$, which inspires us of the following algorithm:
+\begin{algorithm}[ht]
+\caption{Karatsuba Multiplication}\label{kmultiplication}
+\begin{algorithmic}[1]\item Recursively calculate $ac$;
+\State{Recursively calculate $bc$}
+\State{Recursively calculate $(a+b)(c+d)$}
+\State{Calculate \textcircled{\raisebox{-.9pt}{3}} - \textcircled{\raisebox{-.9pt}{2}} - \textcircled{\raisebox{-.9pt}{1}} to get $ad+bc$}
+\State{Combine the results appropriately, i.e. $xy=10^nac +\allowbreak 10^{n/2}(ad+bc) +\allowbreak bd$}
+\end{algorithmic}
+\end{algorithm}
+
+Algorithm \ref{kmultiplication} demonstrates that even a simple problem with a presumably unique solution has plenty of room for subtle algorithm analysis and design. 
+\section{Course Topic}
+The course will cover the following topics:
+\begin{itemize}
+\item Vocabulary for design and analysis of algorithms;
+\item Divide-and-conquer algorithm design paradigm;
+\item Randomization in algorithm design;
+\item Primitives for reasoning about graphs;
+\item Use and implementation of data structures.
+\end{itemize}
+In part II of the course the following topics will be covered:
+\begin{itemize}
+\item Greedy algorithm design paradigm;
+\item Dynamic programming algorithm design paradigm;
+\item NP-complete problems and what to do with them;
+\item Fast heuristics with provable guarantees for NP problems;
+\item Fast exact algorithms for special cases of NP problems;
+\item Exact problems that beat brute-force search for NP problems.
+\end{itemize}
+\section{Merge Sort}
+We will use \textbf{merge sort} to illustrate a few basic ideas of the course. Merge sort is a non-trivial algorithm to tackle the sorting problem:
+\begin{description}
+\item[Input]An unsorted array of $n$ numbers;
+\item[Output]The same numbers in sorted order.
+\end{description}
+\subsection{Pseudo Code}
+Merge sort is more efficient than selection sort, insertion sort and bubble sort. It is  a good introductory example for the divide \& conquer paradigm. Its pseudo code is shown in Algorithm \ref{mergesort}.
+\begin{algorithm}[ht]
+\caption{Merge sort}\label{mergesort}
+\begin{algorithmic}[1]
+\Input\Statex{Unsorted array of length n}
+\Output\Statex{Sorted array of length n}
+\If{length of the array = 0 or 1}
+\State{return}\Comment{Basic case. Array already sorted.}
+\EndIf
+\State{Recursively merge sort 1st half of the array.}
+\State{Recursively merge sort 2nd half of the array.}
+\State{Merge the two sorted halves into one sorted array.}
+\end{algorithmic}
+\end{algorithm}
+The merging process may not seem intuitive. It is implemented with parallel traverses of the two sorted sub-arrays, as shown in Algorithm \ref{mergehalves}.
+\begin{algorithm}[ht]
+\caption{Merging two sorted sub-arrays}\label{mergehalves}
+\begin{algorithmic}[1]
+\Input
+\Statex{A = 1st sorted sub-array, of length $\lfloor n/2 \rfloor$}
+\Statex{B = 2nd sorted sub-array, of length $\lceil n/2 \rceil$}
+\Output\Statex{C = sorted array of length $n$}
+\State{i = 1, j = 1}
+\For{k = 1 \textbf{to} $n$}
+\If{i $>$ A.len}\Comment{A has been exhausted}
+\State{C[k] = B[j++]}
+\ElsIf{j $>$ B.len}\Comment{B has been exhausted}
+\State{C[k] = A[i++]}
+\ElsIf{A[i] $<$ B[j]}
+\State{C[k] = A[i++]}
+\Else\Comment{A[i]$\geq$B[j]}
+\State{C[k] = B[j++]}
+\EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+\subsection{Running Time}
+The running time of the merging operation is obviously linear to the length of the array. Precisely speaking, each iteration involves one increment of i or j, one increment of k, an assignment to C[k] and at most 3 comparisons\footnote{Here we are taking an approach more detailed than that in the lecture: end cases, i.e. when A or B is exhausted, are taken into account.}. Taking the initialization of i and j into account, in total we have to carry out 6n + 2 primitive operations, which is smaller than 8n.
+
+We can then draw the \textbf{recursive tree} of the problem. The original merge sort problem of size $n$ resides at level 0. At level 1 we have 2 sub-problems of size $n/2$, etc. In general, at level $j$ we have $2^j$ sub-problems of size $\frac{n}{2^j}$, and in total we have $\log n+1$ levels\footnote{At the last level $k$ we must have $\frac{n}{2^k}=1$, thus $k=\log n$.}. At each level, the number of required primitive operations is smaller than $8\cdot\frac{n}{2^j}\cdot 2^j=8n$. In the end, we have an upper bound of the total number of primitive operations needed to solve the original merge sort problem of size $n$: $8n(\log n+1)$.
+\section{Asymptotic Analysis}
+In the analysis above, we have been applying 3 guiding principles that will serve as universal tactics in future analysis of algorithms:
+\begin{enumerate}
+\item Focus on worst-case analysis, rather than average-case analysis or benchmarks on a specified set of inputs.
+\item Analyze with no regard to the constant factor.
+\item Conduct asymptotic analysis, i.e. focus on running time when $n$ is large.
+\end{enumerate}
+
+\textbf{Asymptotic analysis} provides basic vocabulary for the design and analysis of algorithms. It is essential for high-level reasoning about algorithms because it is both coarse enough to suppress details dependent upon architecture, language, compiler and implementation details, and sharp enough to facilitate comparisons between different algorithms, especially for inputs of large size. Its high-level idea is to \textbf{suppress constant factors as well as lower-order terms}. For our example of merge sort, the running time of $8n(\log n+1)$ is actually equivalent to $n\log n$, or in big-O notation, $O(n\log n)$.
+\subsection{Big-O Notation}
+Let $T(n),n\in\mathbb{N}$ be the function representing the running time of an algorithm with input of size $n$. The \textbf{Big-O notation} $T(n) = O(f(n))$ means that eventually (for all sufficiently large $n$), $T(n)$ will be bounded above by a constant multiple of $f(n)$. We hereby provide its formal definition.
+\begin{definition}\label{bigodef}
+Big-O notation $T(n)=O(f(n))$ holds if and only if there exist constants $c,n_0$ such that 
+$$T(n)\leq c\cdot f(n),\forall n\geq n_0.$$
+\end{definition}
+\begin{theorem}
+\begin{equation*}
+a_kn^k+\dots+a_1n+a_0=O(n^k)
+\end{equation*}
+\end{theorem}
+\begin{proof}
+Constants $n_0=1$ and $c=\sum\limits_{i=0}^{k}\lvert a_i\rvert$ satisfy Definition \ref{bigodef}.
+\end{proof}
+\begin{theorem}
+For every $k\geq 1$, $n^k\neq O(n^{k-1})$.
+\end{theorem}
+\begin{proof}
+The theorem can be proved by contradiction. Suppose $n^k=O(n^{k-1})$, i.e. $\exists$ constants $c,n_0$ such that $$n^k\leq c\cdot n^{k-1}, \forall n>n_0.$$Then $$n\leq c,\forall n>n_0,$$which is an obvious contradiction. 
+\end{proof}
+\subsection{Omega, Theta and Little-O Notations}
+\begin{definition}
+Omega notation $T(n)=\Omega(f(n))$ holds if and only if there exist constants $c,n_0$ such that 
+$$T(n)\geq c\cdot f(n),n\geq n_0.$$
+\end{definition} 
+\begin{definition}
+Theta notation $T(n)=\Theta(f(n))$ holds if and only if $T(n)=\Omega(f(n))$ and $T(n)=O(f(n))$, which is equivalent to $\exists$ constants $c_1,c_2,n_0$ such that 
+$$c_1\cdot f(n)\leq T(n)\leq c_2\cdot f(n),\forall n\geq n_0$$
+\end{definition} 
+A convention in algorithm design, though a sloppy one, is to use big-O notation to represent Theta notation. 
+\begin{definition}
+Little-O notation $T(n)=o(f(n))$ holds if and only if  $\forall$ constant $c>0$, $\exists$ constant $n_0$ such that 
+$$T(n)\leq c\cdot f(n), \forall n\geq n_0.$$
+\end{definition} 
+\begin{theorem}
+$n^{k-1}=o(n^k),\forall k\geq 1$
+\end{theorem}
+\begin{proof}
+Constant $n=1/c$ can satisfy the condition.
+\end{proof}
+\ifx\PREAMBLE\undefined
+\end{document}
+\fi

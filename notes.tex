@@ -1,0 +1,26 @@
+\input{preamble}
+\def\PREAMBLE{PREAMBLE}
+\title{Notes for Algorithm Design Analysis}
+\author{Jing LI\\pkuyplijing@gmail.com}
+
+\begin{document}
+\pagestyle{empty}
+\hypersetup{pageanchor=false}
+\maketitle
+\begin{center}
+\emph{Sincere gratitude to Professor Tim Roughgarden \\for offering such a wonderful class.}
+\end{center}
+\tableofcontents
+\newpage
+\hypersetup{pageanchor=true}
+\pagenumbering{arabic}
+\pagestyle{headings}
+\addtocontents{toc}{\protect\thispagestyle{empty}}
+\input{Introduction}
+\input{DivideConquer}
+\input{RandomizedAlgorithms}
+\clearpage%somehow needed so that list of algorithms in toc jumps to the correct page.
+\phantomsection
+\addcontentsline{toc}{chapter}{\listalgorithmname}
+\listofalgorithms
+\end{document}

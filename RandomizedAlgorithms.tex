@@ -1,0 +1,118 @@
+\ifx\PREAMBLE\undefined
+\input{preamble}
+\begin{document}
+\fi
+\chapter{Randomized Algorithms}
+\section{Quick Sort}
+\subsection{Overview}
+Quick sort is a prevalent sorting algorithm in practice. It is $O(n\log n)$ on average, and it works in place, i.e. extra memory need to carry out the sort is minimal, whereas for merge sort, we need at least $O(n)$ extra memory. The problem is the same as specified for merge sort. Here we assume that all items inside the array are distinct for simplicity. 
+
+The key idea of merge sort is \textbf{partition the array around a pivot element}. Plenty of deliberation remains for the choice of the pivot element. For the moment we just assume that the first element is used. In a partition, the array is rearranged so that elements smaller than the pivot are put before the pivot, while elements larger than it are put after the pivot. The partition puts the pivot in the correct position. By recursively partition the two sub-arrays on both sides of the pivot, the whole array becomes sorted. As will be revealed later, a partition can be finished with $O(n)$ time and no extra memory. The skeleton of the algorithm is shown in Algorithm \ref{quicksortskeleton}.
+\begin{algorithm}[ht]
+\caption{Skeleton of Quick Sort}\label{quicksortskeleton}
+\begin{algorithmic}[1]
+\Input\Statex{Array $A$ with $n$ distinct elements in any order}
+\Output\Statex{Array $A$ in sorted order}
+\If{$A.len$ == 1}
+\State{return}
+\Else
+\State{$p$ = ChoosePivot($A$)}
+\State{Partition $A$ around $p$}
+\State{Recursively sort 1st part(on left of $p$)}
+\State{Recursively sort 2nd part(on right of $p$)}
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+\subsection{Partition Subroutine}
+If the in place requirement is thrown away, it is easy to come up with a partition algorithm using $O(n)$ time and $O(n)$ extra memory, as shown in Algorithm \ref{partitionextramemory}.
+\begin{algorithm}[ht]
+\caption{Partition with $O(n)$ Extra Memory}\label{partitionextramemory}
+\begin{algorithmic}[1]
+\Input\Statex{Array $A$ with $n(n>1)$ distinct elements in any order}
+\Statex{Pivot element $p$, put at first position of $A$}
+\Output\Statex{Array $A$ partitioned around $p$}
+\State{Allocate $temp[n]$}
+\State{$small = 1, big = n$}
+\For{$i$ = 2 \textbf{to} $n$} 
+\If{$A[i]>p$}
+\State{$temp[big--] = A[i]$}
+\Else\Comment{$A[i]<p$}
+\State{$temp[small++] = A[i]$}
+\EndIf
+\EndFor
+\State{Assert $small == big$}
+\State{$temp[small] = p$}
+\State{Copy $temp$ back to $A$}
+\end{algorithmic}
+\end{algorithm}
+
+Now we try to implement an in-place partition algorithm that uses no extra memory. During the process, the array will be composed of 4 consecutive parts: the pivot $p$ at the first position, then elements smaller than $p$, elements larger than $p$ and finally elements remaining to be partitioned. Algorithm \ref{partitionnoextramemory} provides such an implementation. It completes the partition in one scan of the array, and uses no extra memory. $i$ is the index of the first element larger than $p$\footnote{If $A[2]$ is smaller than $p$, $i$ will not have the same meaning when it gets initialized to 2. But the algorithm is still correct. In such case, $i$ remains the same as $j$ until we encounter the first element larger than $p$, and $swap$ will not do anything because $k$ and $i$ are always the same when we do the comparison.}, while $j$ is the index of the first unpartitioned element. 
+\begin{algorithm}[ht]
+\caption{Partition with No Extra Memory}\label{partitionnoextramemory}
+\begin{algorithmic}[1]
+\Input\Statex{Array $A$ with $n(n>1)$ distinct elements in any order}
+\Statex{Pivot element $p$, put at first position of $A$}
+\Output\Statex{Array $A$ partitioned around $p$}
+\State{$i = 2,\:j = 2$}
+\For{$k$ = 2 \textbf{to} $n$} 
+\If{$A[k]<p$}
+\State{$swap(A[k],A[i++])$}
+\EndIf
+\State{$j++$}
+\EndFor
+\State{$swap(A[1],A[i-1])$}
+\end{algorithmic}
+\end{algorithm}
+\subsection{Choice of Pivot}
+The running time of quick sort depends on the choice of the pivot. The naive approach taken above to always choose the first element is not satisfactory. If the array is already sorted, each time the size of the problem is only reduced by 1, which is no better than selection sort, and the running time if $O(n^2)$. This is indeed the worst case of quick sort. On the contrary, if each time the pivot divides the array into sub-arrays of the same size, we will have the recurrence relation 
+\begin{equation*}
+T(n)=2\cdot T(n/2)+O(n),
+\end{equation*}
+and the running time will be $O(n\log n)$ according to the master method, which is the best case. 
+\subsection{Quick Sort Theorem}
+A good solution is to choose the pivot randomly at every recursive call. We will prove the quick sort theorem \ref{quicksorttheorem}. 
+\begin{theorem}\label{quicksorttheorem}
+For every input array $A$ of length $n$, the average running time of quick sort (with random pivots) is $O(n\log n)$.
+\end{theorem}
+The proof of the theorem involves some basic probability knowledge that won't be covered here. Let $\Omega$ represent the sample space of all possible sequences of pivots in quick sort. For any $\sigma\in\Omega$, let $C(\sigma)$ represent the number of comparisons between array elements made by quick sort. We have Lemma \ref{rtdominated}.
+\begin{lemma}\label{rtdominated}
+The running time of quick sort is dominated by comparisons, i.e. $\exists$ constant $c$ such that $\forall\sigma\in\Omega$, 
+$$RT(\sigma)\leq c\cdot C(\sigma).$$
+\end{lemma}
+Lemma \ref{rtdominated} means that in order to prove the quick sort algorithm, all we need is to prove the expectation of $C(\sigma)$ is $O(n\log n)$. We cannot apply the master method here because in quick sort, the two sub-problems are unlikely to have the same size. 
+
+For a fixed input array $A$, let $z_i$ represent its $i^{th}$ smallest element. Let $x_{ij}(\sigma)$ represent the number of comparisons between $z_i$ and $z_j$ made during quick sort with pivot sequence $\sigma.$ Whenever a comparison happens, one of the two elements being compared is the pivot. If $z_i$ and $z_j$ have been partitioned respectively into two sides of a pivot before neither is used as pivot, they will never be compared in the future. If $z_i$ is used as pivot and is compared against $z_j$, $z_i$ will be at its correct position at the end of the partition, and is excluded from any further comparisons. Thus $\forall i,j,\sigma$, it is clear that $x_{ij}(\sigma)$ is either 0 or 1. A random variable that can only take values 0 and 1, like $x_{ij}$ here, is called an \textbf{indicator}. 
+
+$C(\sigma)$ can be expressed as the sum over all $x_{ij}$:
+\begin{equation*}
+C(\sigma)=\sum\limits_{i=1}^{n-1}\sum\limits_{j=i+1}^{n}x_{ij}(\sigma).
+\end{equation*}
+According to the \textbf{linearity of expectation}, an taking into account of the fact that $x_{ij}$ is an indicator, we have
+\begin{equation*}
+E[C]=\sum\limits_{i=1}^{n-1}\sum\limits_{j=i+1}^{n}E[x_{ij}]=\sum\limits_{i=1}^{n-1}\sum\limits_{j=i+1}^{n}P[x_{ij}=1].
+\end{equation*}
+Here we are actually applying a \textbf{decomposition approach} that goes for the analysis of average running time of a lot of randomized algorithms. 
+\begin{enumerate}
+\item Identify random variable $Y$ that we care about.
+\item Express $Y$ as the sum of a series of indicators: $Y=\sum\limits_lx_l$.
+\item Apply linearity of expectation: $E[Y]=\sum\limits_lE[x_l]=\sum\limits_lP[x_l=1]$.
+\end{enumerate}
+It can be proved that for any $i<j$,
+$$P(x_{ij}=1)=\frac{2}{j-i+1}$$
+\begin{proof}
+Consider the set of elements 
+$$S_{ij}=\{z_i,z_{i+1},\dots,z_{j-1},z_j\}.$$
+As long as none of them is chosen as pivot, they will be passed to the same recursive call. If $z_i$ or $z_j$ is the first among them to be chosen as pivot, $x_i$ and $x_j$ will be compared. On the contrary, if any other element is chosen as pivot before $z_i$ and $z_j$, $z_i$ and $z_j$ will end up in different sub-arrays, and they can never be compared in the future. So $P(x_{ij}=1)$ is equal to the probability that $z_i$ or $z_j$ is the first element of $S_{ij}$ to be chosen as pivot, i.e. $\frac{2}{j-i+1}$.
+\end{proof}
+Then we have 
+\begin{align*}
+E[C]&=\sum\limits_{i=1}^{n-1}\sum\limits_{j=i+1}^{n}P[x_{ij}=1]=\sum\limits_{i=1}^{n-1}\sum\limits_{j=i+1}^{n}\frac{2}{j-i+1}\\
+&=2\cdot\sum\limits_{i=1}^{n-1}\left(\frac{1}{2}+\frac{1}{3}+\dots+\frac{1}{n-i+1}\right)\\
+&=2\cdot\left(\frac{n}{2}+\frac{n-1}{3}+\frac{n-2}{4}+\dots+\frac{1}{n}\right)\\
+&\leq2n\sum\limits_{k=2}^n\frac{1}{k}\\
+&\leq2n\int_1^n\frac{1}{x}dx=2n\ln n
+\end{align*}
+Thus the running time of quick sort with random pivots is $O(n\log n)$.
+\ifx\PREAMBLE\undefined
+\end{document}
+\fi
