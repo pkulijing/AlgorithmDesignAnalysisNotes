@@ -113,6 +113,47 @@ E[C]&=\sum\limits_{i=1}^{n-1}\sum\limits_{j=i+1}^{n}P[x_{ij}=1]=\sum\limits_{i=1
 &\leq2n\int_1^n\frac{1}{x}dx=2n\ln n
 \end{align*}
 Thus the running time of quick sort with random pivots is $O(n\log n)$.
+\section{Randomized Selection}
+\subsection{RSelect Algorithm}
+In this section we will discuss the selection problem.
+\begin{description}
+\item[Input]Array $A$ containing $n$ distinct numbers in arbitrary order, and number $i\in\{1,2,\dots,n\}$. 
+\item[Output]The $i^{th}$ order statistic, i.e. $i^{th}$ smallest element of $A$.
+\end{description}
+Obviously, the $i^{th}$ order statistic can be found by sorting the array and then directly pick the $i^{th}$ element. The overall running time is at least $O(n\log n)$. A randomized approach similar to that of quick sort can reduce the average running time to $O(n)$, which is quite amazing because simply reading all elements of the array is already an $O(n)$ process. The algorithm is provided in Algorithm \ref{randomizedselection}. 
+\begin{algorithm}[ht]
+\caption{Randomized Selection}\label{randomizedselection}
+\begin{algorithmic}[1]
+\Input\Statex{Array $A$ with $n$ distinct elements in any order}
+\Statex{Integer $i\in\{1,2,\dots,n\}$}
+\Output\Statex{$i^{th}$ order statistic of $A$}
+\Function{$RSelect$}{$A,i$}
+\If{$A.len==1$}
+\State{return $A[1]$}
+\EndIf
+\State{Randomly choose pivot $p$ from $A$}
+\State{Partition $A$ around $p$}
+\State{Let $j$ = new index of $p$, $A_1,A_2$ = 1st and 2nd part of $A$}
+\If{$j==i$}
+\State{return $p$}
+\ElsIf{$j>i$}
+\State{return $RSelect(A_1,i)$}\Comment{$A_1.len=j-1$}
+\Else\State{return $RSelect(A_2,i-j)$}\Comment{$j<i.\:A_2.len=n-j$}
+\EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\subsection{Running Time}
+$RSelect$ is also based on recursively partitioning the arrays, but at most one recursive call is needed in each iteration because the $i^{th}$ order statistic can only be on one side of the pivot. As with quick sort, the worse case happens when each time the smallest element is chosen as pivot. The worst running time is $O(n^2)$. The average running time is given by Theorem \ref{rselecttheorem}.
+\begin{theorem}\label{rselecttheorem}
+For any input array $A$ of length $n$, the average running time of $RSelect$ is $O(n)$.
+\end{theorem}
+In $RSelect$, the only workload outside of the recursive call is the partition, which is an $O(n)$ process. Another way to note its time complexity is that it uses fewer than $cn$ operations, in which $c$ is a constant. 
+\begin{definition}
+RSelect is said to be in phase $j$ if size of the current array is between $(3/4)^{j+1}n$ and $(3/4)^jn$.
+\end{definition}
+Let $x_j$ represent the number of recursive calls during phase $j$. Then we have 
+$$RT(RSelect)\leq cn\sum\limits_jx_j\cdot\left(\frac{3}{4}\right)^j$$
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
