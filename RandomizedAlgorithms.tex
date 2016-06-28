@@ -152,8 +152,39 @@ In $RSelect$, the only workload outside of the recursive call is the partition, 
 \begin{definition}
 RSelect is said to be in phase $j$ if size of the current array is between $(3/4)^{j+1}n$ and $(3/4)^jn$.
 \end{definition}
-Let $x_j$ represent the number of recursive calls during phase $j$. Then we have 
-$$RT(RSelect)\leq cn\sum\limits_jx_j\cdot\left(\frac{3}{4}\right)^j$$
+Let $x_j$ represent the number of recursive calls during phase $j$. Then we have
+\begin{equation}\label{rtrselect}
+RT(RSelect)\leq cn\sum\limits_jx_j\cdot\left(\frac{3}{4}\right)^j
+\end{equation}
+Now let's consider $E(x_j)$. If $RSelect$ chooses a pivot giving a 25\%-75\% or better partition, the execution is guaranteed to enter the next phase, because the length of the sub-array to examine will shrink by at least 25\%. The probability for such a partition to happen is obviously 50\%. The problem is analogous to the coin flipping problem. The expectation of $x_j$ is the same as the expectation of the number of flips needed to have the ``head'' side of the coin show up for the first time. The coin flipping problem is a geometric distribution problem, in which the expectation is $\frac{1}{p}=\frac{1}{1/2}=2$. Thus $E(x_j)=2$. Substitute this into \eqref{rtrselect}, we have
+\begin{align*}
+E(RT(RSelect))\leq cn\sum\limits_jE(x_j)\left(\frac{3}{4}\right)^j=2cn\sum\limits_j\left(\frac{3}{4}\right)^j\leq8cn.
+\end{align*}
+\section{Deterministic Selection}
+In this section we will cover a deterministic selection algorithm that is also $O(n)$. It is not a good choice when compared against random selection because the constant for the big-O notation is larger, and it is not in place. Yet it is still a brilliant and interesting algorithm.
+\begin{algorithm}[ht]
+\caption{Deterministic Selection}\label{dselection}
+\begin{algorithmic}[1]
+\Input\Statex{Array $A$ with $n$ distinct elements in any order}
+\Statex{Integer $i\in\{1,2,\dots,n\}$}
+\Output\Statex{$i^{th}$ order statistic of $A$}
+\Function{$DSelect$}{$A,i$}
+\State{$n=A.len$}
+\State{Break $A$ into $n/5$ sub-arrays of length 5 and sort each sub-array}
+\State{Let array $C$ store the medians of the $n/5$ sub-arrays}
+\State{$p=DSelect(C,n/10)$}\Comment{select ``median of medians recursively''}
+\State{Partition $A$ around $p$}
+\State{Let $j$ = new index of $p$, $A_1,A_2$ = 1st and 2nd part of $A$}
+\If{$j==i$}\State{return $p$}
+\ElsIf{$j>i$}\State{return $DSelect(A_1,i)$}
+\Else\State{return $DSelect(A_2,i-j$)}
+\EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\begin{theorem}
+$\forall$ input array of size $n$, $DSelect$ runs in $O(n)$ time.
+\end{theorem}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
