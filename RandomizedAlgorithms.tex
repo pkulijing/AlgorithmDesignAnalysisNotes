@@ -162,6 +162,8 @@ E(RT(RSelect))\leq cn\sum\limits_jE(x_j)\left(\frac{3}{4}\right)^j=2cn\sum\limit
 \end{align*}
 \section{Deterministic Selection}
 In this section we will cover a deterministic selection algorithm that is also $O(n)$. It is not a good choice when compared against random selection because the constant for the big-O notation is larger, and it is not in place. Yet it is still a brilliant and interesting algorithm.
+
+When partitioning an array, the ideal pivot is its median. In order to guarantee the efficiency of the algorithm, we need to find a good enough pivot. The key idea is to use the ``median of medians''. The array is broken into $n/5$ sub-arrays of length 5. The sub-arrays are sorted, their medians are put into a new array $C$, and we recursively compute the median of $C$. The final result is returned as the pivot. The algorithm is shown in Algorithm \ref{dselection}.
 \begin{algorithm}[ht]
 \caption{Deterministic Selection}\label{dselection}
 \begin{algorithmic}[1]
@@ -170,21 +172,84 @@ In this section we will cover a deterministic selection algorithm that is also $
 \Output\Statex{$i^{th}$ order statistic of $A$}
 \Function{$DSelect$}{$A,i$}
 \State{$n=A.len$}
-\State{Break $A$ into $n/5$ sub-arrays of length 5 and sort each sub-array}
-\State{Let array $C$ store the medians of the $n/5$ sub-arrays}
-\State{$p=DSelect(C,n/10)$}\Comment{select ``median of medians recursively''}
-\State{Partition $A$ around $p$}
+\If{$n\leq 5$}
+\State{sort $A$ and pick the $i^{th}$ element}
+\EndIf 
+\State{Break $A$ into $n/5$ sub-arrays of length 5 and sort each sub-array}\Comment{$O(n)$}
+\State{Let array $C$ store the medians of the $n/5$ sub-arrays}\Comment{$O(n)$}
+\State{$p=DSelect(C,n/10)$}\Comment{Recursively compute median. $T(n/5)$}
+\State{Partition $A$ around $p$}\Comment{$O(n)$}
 \State{Let $j$ = new index of $p$, $A_1,A_2$ = 1st and 2nd part of $A$}
 \If{$j==i$}\State{return $p$}
-\ElsIf{$j>i$}\State{return $DSelect(A_1,i)$}
-\Else\State{return $DSelect(A_2,i-j$)}
+\ElsIf{$j>i$}\State{return $DSelect(A_1,i)$}\Comment{$T(?)$ running time to be determined}\label{line1}
+\Else\State{return $DSelect(A_2,i-j$)}\label{line2}
 \EndIf
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
+Two recursive calls are made in Algorithm \ref{dselection}. Let $T(n)$ represent the running time of $DSelect$ on an array of length $n$, then there exists constant $c$ such that 
+\begin{itemize}
+\item $T(1)=1$
+\item $T(n)\leq cn+T(n/5)+T(?)$
+\end{itemize}
+in which the running time of the second recursive call needs to be determined. 
+\begin{lemma}
+The 2nd recursive call (line \ref{line1} or \ref{line2}) is guaranteed to be $O(\frac{7}{10}n)$.
+\end{lemma}
+\begin{proof}
+Let $k=n/5$, and let $x_i$ represent the $i^{th}$ smallest of the $k$ medians. Then the final pivot is $x_{k/2}$. Our goal is to prove that at least 30\% of the elements in the input array are smaller than the $x_{k/2}$, and at least 30\% are bigger than it. Let's put all elements of the array in a 2D grid as follow, with each sorted group as a column, and $x_i$ in ascending order. 
+\begin{table}[H]
+\centering
+\begin{tabular}{ccccccc}
+{\color{red}$\circ$}&{\color{red}$\circ$}&{\color{red}$\cdots$}&{\color{red}$\circ$}&$\cdots$&$\circ$&$\circ$
+\\
+{\color{red}$\circ$}&{\color{red}$\circ$}&{\color{red}$\cdots$}&{\color{red}$\circ$}&$\cdots$&$\circ$&$\circ$
+\\
+{\color{red}$x_1$}&{\color{red}$x_2$}&{\color{red}$\cdots$}&$x_{k/2}$&{\color{blue}$\cdots$}&{\color{blue}$x_{k-1}$}&{\color{blue}$x_k$}\\
+$\circ$&$\circ$&$\cdots$&{\color{blue}$\circ$}&{\color{blue}$\cdots$}&{\color{blue}$\circ$}&{\color{blue}$\circ$}\\
+$\circ$&$\circ$&$\cdots$&{\color{blue}$\circ$}&{\color{blue}$\cdots$}&{\color{blue}$\circ$}&{\color{blue}$\circ$}
+\end{tabular}
+\end{table}
+Obviously, elements in red color are smaller than $x_{k/2}$, while elements in blue color are bigger than it. Both include $\frac{3}{5}\times\frac{1}{2}=30\%$ of the elements. Thus the size of the sub-array is guaranteed to shrink by at least 30\% in the 2nd recursive call, so its running time is $O(\frac{7}{10}n)$.
+\end{proof}
 \begin{theorem}
 $\forall$ input array of size $n$, $DSelect$ runs in $O(n)$ time.
 \end{theorem}
+\begin{proof}
+Now we have 
+\begin{equation*}
+T(n)\leq cn+T\left(\frac{n}{5}\right)+T\left(\frac{7n}{10}\right).
+\end{equation*}
+The master method is not applicable because the two sub-problems are not of the same size. We will prove $T(n)\leq 10cn$ by induction.
+
+The base case($n=1$) is trivial. Suppose that $T(k)\leq 10ck$ holds for all $k<n$. Then we have 
+\begin{align*}
+T(n)\leq&cn+T\left(\frac{n}{5}\right)+T\left(\frac{7n}{10}\right)\\
+\leq&cn+10c\cdot\frac{n}{5}+10c\cdot\frac{7n}{10}\\
+=&10cn
+\end{align*} 
+Hence $T(n)$ is $O(n)$.
+\end{proof}
+\section{Lower Bound for Comparison-Based Sorting}
+Up to now we have in our toolbox $O(n\log n)$ sorting algorithms and $O(n)$ selection algorithms. In this section we will prove that we cannot do better with comparison-based sorting.
+\begin{definition}
+In a comparison-based sorting, the array elements can only be accessed via comparisons. 
+\end{definition}
+Merge sort, heap sort, quick sort, selection sort are all examples of comparison-based sorting. Bucket sort, counting sort, radix sort are examples of non-comparison-based sorting. They require extra knowledge of the data to sort. 
+
+The following theorem provides a lower bound for the running time of comparison-based sorting. 
+\begin{theorem}
+Every comparison-based sorting algorithm has worst-case running time $\Omega(n\log n)$.
+\end{theorem}
+\begin{proof}
+Consider the action of a comparison-based sorting algorithm on an input composed of integers from 1 to $n$. There are totally $n!$ such inputs. Let $k$ be the minimum number of comparisons needed to address all these inputs. Each comparison has two possible results, thus $k$ comparisons have $2^k$ possible combinations of results. In order for all the $n!$ possible inputs to be sorted correctly, we must have
+$$2^k\leq n!,$$
+because otherwise there would be at least 2 inputs that appeared the same for the comparison-based algorithm, according to the pigeonhole principle\footnote{Also named drawer principle}. Hence we have 
+$$k\leq\log(n!)<\log(n/2)^{n/2}=\frac{n}{2}\log\frac{n}{2},$$
+which means that the running time of the algorithm is $\Omega(n\log n)$.
+
+
+\end{proof}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi

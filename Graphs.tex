@@ -1,0 +1,65 @@
+\ifx\PREAMBLE\undefined
+\input{preamble}
+\begin{document}
+\fi
+\chapter{Graph Algorithms}
+\textbf{Graphs represent pairwise relationships amongst a set of objects}. The objects are called vertices or nodes. The relationships are called edges or arcs, each connecting a pair of vertices. An edge can be directed or undirected. The set of vertices and the set of edges are noted respectively as $V$ and $E$. Graph is a concept heavily used in reality. Road networks, the web, social networks, precedence constraints are all examples of graphs.
+
+A connected graph composed of $n$ vertices with no parallel edges has at least $n-1$ and at most $n(n-1)/2$ edges. Let $m$ represent the number of edges. In most applications, $m$ is $\Omega(n)$ and $O(n^2)$. If $m$ is $O(n)$ or close to it, the graph is called a sparse graph, while if $m$ is closer to $O(n^2)$, it's called a dense graph. Yet their delimitation is not strictly clear. 
+\section{Representation}
+\subsection{Adjacent Matrix}
+An undirected graph $G$ with $n$ vertices and no parallel edges can be represented by an $n\times n$ 0-1 matrix $A$. $A_{ij}=1$ when and only when $G$ has an $i-j$ edge. Variants of this representation can easily accommodate parallel edges, weighted edges: just let $A_{ij}$ represent the number of parallel edges or the weight of the edge. For directed graphs, $i\rightarrow j$ can be represented by $A_{ij}=1$ and $A_{ji}=-1$.
+
+Adjacent matrix representation requires $\Theta(n^2)$ space. For a dense graph this is fine, but for a sparse graph it is wasteful. 
+\subsection{Adjacent Lists}
+The adjacent lists representation is composed of 4 ingredients:
+\begin{itemize}
+\item Array/List of vertices. $\Theta(n)$ space.
+\item Array/List of edges. $\Theta(m)$ space.
+\item Each edge points to its end points. $\Theta(m)$ space.
+\item Each vertex points to edges incident on it. $\Theta(m)$ space.
+\end{itemize}
+Adjacent lists representation requires $\Theta(n+m)$ space. 
+
+The choice between the two representations depends on the density of the graph and operations to take. We will mainly use adjacent lists in this chapter.
+\section{Minimum Cut}
+\subsection{Definition}
+\begin{definition}
+A cut of a graph ($V,E$) is a partition of $V$ into two non-empty sets $A$ and $B$.
+\end{definition}
+A graph with $n$ vertices has $2^n-2$ possible cuts. 
+\begin{definition}
+The crossing edges of a cut($A,B$) are those with 
+\begin{itemize}
+\item one endpoint in $A$ and the other in $B$, for undirected graphs;
+\item tail in $A$ and head in $B$, for directed graphs.
+\end{itemize}
+\end{definition}
+We will try to solve the minimum cut problem:
+\begin{description}
+\item[Input]An undirected graph $G=(V,E)$ in which parallel edges are allowed.
+\item[Output]A cut $(A,B)$ with minimum number of crossing edges.
+\end{description}
+A lot of problems in reality can be reduced to a minimum cut problems:
+\begin{itemize}
+\item Identify weakness point of physical networks;
+\item Community detection in social networks;
+\item Image segmentation.
+\end{itemize}
+\subsection{Random Contraction Algorithm}
+\begin{algorithm}[ht]
+\caption{Random Contraction}\label{randomcontraction}
+\begin{algorithmic}[1]
+\Input\Statex{An undirected graph $G=(V,E)$ in which parallel edges are allowed.}
+\Output\Statex{A cut $(A,B)$ with minimum number of crossing edges}
+\While{There are more than 2 vertices left}
+\State{Pick a remaining edge $(u,v)$ randomly}
+\State{Merge(or contract) $u,v$ into a single vertex}
+\State{Remove self-loops}
+\EndWhile
+\State{Return cut represented by 2 final vertices}
+\end{algorithmic}
+\end{algorithm}
+\ifx\PREAMBLE\undefined
+\end{document}
+\fi
