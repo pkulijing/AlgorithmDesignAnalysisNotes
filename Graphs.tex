@@ -60,6 +60,78 @@ A lot of problems in reality can be reduced to a minimum cut problems:
 \State{Return cut represented by 2 final vertices}
 \end{algorithmic}
 \end{algorithm}
+\subsection{Number of Minimum Cuts}
+A graph can have multiple minimum cuts. For example, a tree with $n$ vertices has $n-1$ minimum cuts. We would like to find the largest number of minimum cuts that a graph with $n$ vertices can have.
+\begin{theorem}
+A graph with $n$ vertices can have at most $\binom{n}{2}$ minimum cuts.
+\end{theorem}
+\begin{proof}
+Consider the graph in which the $n$ vertices form a circle. Removing any two edges results in a minimum cut. Thus in total it has $\binom{n}{2}$ minimum cuts. The rest of the proof aims at proving that a graph with $n$ vertices cannot have more minimum cuts.
+
+Recall that the probability for Algorithm \ref{randomcontraction} to return a specific minimum cut is bigger than $\frac{2}{n(n-1)}$. Suppose there are $k$ minimum cuts. The events ``Algorithm \ref{randomcontraction} returns minimum cut $C_i$'' and  ``Algorithm \ref{randomcontraction} returns minimum cut $C_j$'' are disjoint events when $i\neq j$. Thus we have 
+$$1\geq P(\text{return a minimum cut})\geq\frac{2k}{n(n-1)}.$$
+Therefore, 
+$$k\leq \frac{n(n-1)}{2}=\binom{n}{2}.$$
+\end{proof}
+\section{Breadth First Search}
+Graph search is widely used for various purposes:
+\begin{itemize}
+\item Check if a network is connected;
+\item Find shortest paths, e.g. for driving navigation, or formulating a plan;
+\item Calculate connected components.
+\item $\dots$
+\end{itemize}
+We will introduce a few fast algorithms based on graph search. Graph search usually starts from a source vertex. When searching the graph, we want to find everything that is findable, i.e. every vertex reachable from the source via a path. Moreover, we never explore anything twice. In terms of running time, our goal is $O(m+n).$ 
+\subsection{Algorithm}
+BFS explores the nodes of a graph in layers. Nodes with the same distances from the source are in the same layer. It can be used to compute shortest paths of graphs, and to compute connected components of undirected graphs. It guarantees $O(m+n)$ running time. The general pattern of BFS is shown in Algorithm \ref{bfs}.
+\begin{algorithm}[ht]
+\caption{Breadth First Search(BFS)}\label{bfs}
+\begin{algorithmic}[1]
+\Input\Statex{Graph $G$ with all vertices unexplored}
+\Statex{Source vertex $s$}
+\Output\Statex{$G$ with all vertices reachable from $s$ explored.}
+\State{Mark $s$ as explored.}
+\State{Let $Q$ = queue initialized with $s$}
+\While{$Q\neq\emptyset$}
+\State{Remove first element $v$ of $Q$}
+\For{each edge $(v,w)$}
+\If{$w$ is unexplored}
+\State{Mark $w$ as explored}
+\State{Add $w$ to $Q$}
+\EndIf
+\EndFor
+\EndWhile 
+\end{algorithmic}
+\end{algorithm}
+
+At the end of BFS, the fact that a node $v$ is explored means the existence of a path from $s$ to $v$. 
+\subsection{Shortest Path}
+Algorithm \ref{shortestpath} calculates the shortest path from $s$ to any vertex reachable from $s$.
+\begin{algorithm}[ht]
+\caption{Shortest Path (BFS)}\label{shortestpath}
+\begin{algorithmic}[1]
+\Input\Statex{Graph $G$ with all vertices unexplored}
+\Statex{Source vertex $s$}
+\Output\Statex{$dist(v)$ for any vertex $v$, i.e. min number of edges on a path from $s$ to $v$}
+\State{Initialize $dist(v)=\left\{\begin{array}{rl}0,&if(v==s)\\+\infty,&if(v\neq s)\end{array}\right.$}
+\State{Mark $s$ as explored.}
+\State{Let $Q$ = queue initialized with $s$}
+\While{$Q\neq\emptyset$}
+\State{Remove first element $v$ of $Q$}
+\For{each edge $(v,w)$}
+\If{$w$ is unexplored}
+\State{Mark $w$ as explored}
+\State{$dist(w)=dist(v)+1$}
+\State{Add $w$ to $Q$}
+\EndIf
+\EndFor
+\EndWhile 
+\end{algorithmic}
+\end{algorithm}
+
+After the algorithm terminates, $dist(v)=i$ means that $v$ is in the $i^{th}$ layer and that the shortest $s-v$ path has $i$ edges.
+\subsection{Undirected Connectivity}
+\section{Depth First Search}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
