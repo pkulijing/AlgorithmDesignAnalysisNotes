@@ -231,7 +231,7 @@ A sink node is a perfect candidate for the last position in the topological orde
 \end{algorithmic}
 \end{algorithm}
 
-The algorithm using DFS is shown in Algorithm \ref{topologicaldfs}.
+The algorithm using DFS is shown in Algorithm \ref{topologicaldfs}. A loop over the nodes is added in order to guarantee the correctness when $G$ is not connected.
 \begin{algorithm}[ht]
 \caption{Topological Ordering of DAG - DFS}\label{topologicaldfs}
 \begin{algorithmic}[1]
