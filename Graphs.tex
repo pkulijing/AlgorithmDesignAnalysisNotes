@@ -66,13 +66,13 @@ Algorithm \ref{randomcontraction} is not guaranteed to always return a minimum c
 
 If one of the crossing edges of $(A,B)$ is selected in step \ref{randomselection}, the minimum cut cannot be returned. If there are $k$ crossing edges in $(A,B)$, the probability that a crossing edge is selected at the first iteration is $k/m$. The number of edges decrease by an indefinite number at each iteration, while the number of vertices decrease by exactly 1 each time. Thus it is preferable to express the probability in terms of $n$ instead of $m$.
 
-Each vertex $v$ is related to a cut $({v},V-{v})$. The number of crossing edges of this cut is the number of edges incident on $v$, i.e. the degree of $v$. Considering the definition of minimum cut, this number must be larger than $k$. We also know the sum of the degrees of all vertices: $\sum\limits_{v}degree(v)=2m$. Thus we have $2m=\sum\limits_{v}degree(v)>kn$. Hence the probability that a crossing edge is not selected at the first iteration in step \ref{randomselection} is $$1-k/m>2/n.$$
+Each vertex $v$ is related to a cut $({v},V-{v})$. The number of crossing edges of this cut is the number of edges incident on $v$, i.e. the degree of $v$. Considering the definition of minimum cut, this number must be larger than $k$. We also know the sum of the degrees of all vertices: $\sum\limits_{v}degree(v)=2m$. Thus we have $2m=\sum\limits_{v}degree(v)\geq kn$. Hence the probability that a crossing edge is not selected at the first iteration in step \ref{randomselection} is $$1-k/m\geq 2/n.$$
 
-At the second iteration, the same argument still holds. Let $m'$ represent the number of remaining edges after the first iteration. We have $2m'=\sum\limits_{v}degree(v)>k(n-1)$. Thus the probability that a crossing edge is selected at the 2nd iteration under the condition that no crossing edge was selected at the 1st iteration is $$1-k/m'>2/(n-1)$$.
+At the second iteration, the same argument still holds. Let $m'$ represent the number of remaining edges after the first iteration. We have $2m'=\sum\limits_{v}degree(v)\geq k(n-1)$. Thus the probability that a crossing edge is selected at the 2nd iteration under the condition that no crossing edge was selected at the 1st iteration is $$1-k/m'\geq 2/(n-1)$$.
 
 The same argument continues further until the last iteration, i.e. the $(n-2)^{th}$ iteration. Finally, the probability that no crossing edge is selected in the whole process, thus resulting in the minimum cut $(A,B)$ is
 \begin{align*}
-P(A,B)&>\left(1-\frac{2}{n}\right)\left(1-\frac{2}{n-1}\right)\cdots\left(1-\frac{2}{n-(n-3)}\right)\\
+P(A,B)&\geq\left(1-\frac{2}{n}\right)\left(1-\frac{2}{n-1}\right)\cdots\left(1-\frac{2}{n-(n-3)}\right)\\
 &=\frac{(n-2)\cdot(n-3)\cdots 2\cdot 1}{n\cdot(n-1)\cdots 4\cdot 3}\\
 &=\frac{2}{n(n-1)}>\frac{1}{n^2}.
 \end{align*}
@@ -131,7 +131,7 @@ At the end of BFS, the fact that a node $v$ is explored means the existence of a
 \subsection{Shortest Path}
 Algorithm \ref{shortestpath} calculates the shortest path from $s$ to any vertex reachable from $s$.
 \begin{algorithm}[ht]
-\caption{Shortest Path (BFS)}\label{shortestpath}
+\caption{Shortest Path - BFS}\label{shortestpath}
 \begin{algorithmic}[1]
 \Input\Statex{Graph $G$ with all vertices unexplored}
 \Statex{Source vertex $s$}
@@ -152,9 +152,112 @@ Algorithm \ref{shortestpath} calculates the shortest path from $s$ to any vertex
 \end{algorithmic}
 \end{algorithm}
 
-After the algorithm terminates, $dist(v)=i$ means that $v$ is in the $i^{th}$ layer and that the shortest $s-v$ path has $i$ edges.
+After the algorithm terminates, $dist(v)=i$ means that $v$ is in the $i^{th}$ layer and that the shortest path connecting $s$ and $v$ has $i$ edges.
 \subsection{Undirected Connectivity}
+\begin{definition}
+For an undirected graph $G(V,E)$, connected components are equivalence classes of the equivalence relation\footnote{An equivalence relation on a set must satisfy: 1. $a\sim a$; 2. If $a\sim b$, then $b\sim a$; 3. If $a\sim b$ and $b\sim c$, then $a\sim c$.} $u\sim v$, in which $u,v$ are its vertices and $u\sim v\iff\exists$ path from $u$ to $v$. 
+\end{definition} 
+
+Identifying connected components of graphs is useful for various purposes:
+\begin{itemize}
+\item Check if a network is disconnected;
+\item Graph visualization;
+\item Clustering.
+\end{itemize}
+When it comes to the calculation of connected component, undirected graphs and directed graphs are significantly different. BFS is an effective method for calculating the connectivity of undirected graphs. Algorithm \ref{ccundirected} computes the CCs of an undirected graph in $O(m+n)$ time.
+\begin{algorithm}[ht]
+\caption{Connected Components of Undirected Graph - BFS}\label{ccundirected}
+\begin{algorithmic}[1]
+\Input\Statex{Undirected graph $G$ with all vertices unexplored and labeled 1 to $n$}
+\Output\Statex{Connected components of $G$}
+\For{$i$ = 1 \textbf{to} $n$}
+\If{$i$ not explored}
+\State{$BFS(G,i)$}\Comment{discovers $i$'s connected component}
+\EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
 \section{Depth First Search}
+DFS is a more aggressive method to search an graph than BFS. It explores the nodes following the edges as deeply as possible, and only backtracks when necessary. DFS is especially important for dealing with directed graphs. As we are about to demonstrate, it helps to compute topological ordering of directed acyclic graphs and strongly connected components of directed graphs. As with BFS, DFS also runs in $O(m+n)$ time. 
+
+DFS can be implemented by mimicking BFS in Algorithm \ref{bfs}. A stack should be used instead of a queue. A recursive approach is shown in Algorithm \ref{dfs}.
+\begin{algorithm}[ht]
+\caption{Depth First Search (Recursive)}\label{dfs}
+\begin{algorithmic}[1]
+\Input\Statex{Graph $G$ with all vertices unexplored}
+\Statex{Source vertex $s$}
+\Output\Statex{$G$ with all vertices reachable from $s$ explored.}
+\Function{$DFS$}{$G,s$} 
+\State{Mark $s$ as explored}
+\For{each edge $(s,v)$}
+\If{$v$ not explored}
+\State{$DFS(G,v)$}
+\EndIf
+\EndFor
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+DFS can also be used to calculate connected components of undirected graphs. But we will focus on two applications of DFS that cannot be handled with BFS.
+\subsection{Topological Sort}
+Topological sort aims at putting the nodes of a directed graph in topological ordering. 
+\begin{definition}
+A topological ordering of a directed graph $G$ is a labeling $f$ of $G$'s nodes among $\{1,2,\dots,n\}$ such that $\forall(u,v)\in G,\:f(u)<f(v)$.
+\end{definition}
+All edges of a directed graph go forward in a topological ordering. Topological sort is applied when the order of a sequence of tasks with precedence constraints needs to be arranged. Note that if a directed graph contains a cycle, there exists no topological ordering for it. This condition is actually necessary and sufficient.
+\begin{theorem}
+A directed graph has a topological ordering if and only if it contains no cycle.
+\end{theorem}
+One way to find a topological ordering of a DAG is by identifying sink nodes, i.e. nodes with no outgoing arcs.
+\begin{theorem}
+A DAG has at least one sink node.
+\end{theorem}
+\begin{proof}
+The theorem can be proved by contradiction easily. Suppose we have a DAG containing no sink node. Starting from a source node, we can follow one of its outgoing arcs to a new node. The process can be done indefinitely because every node has outgoing arcs. But it is inevitable that at least one node will be visited multiple times after $n+1$ steps, forming a cycle, which contradicts with the definition of DAG.
+\end{proof}
+A sink node is a perfect candidate for the last position in the topological ordering: no arc starts from it. Algorithm \ref{topologicalnodfs} calculates the topological ordering of a DAG by recursively putting a sink node at the end of the ordering. 
+\begin{algorithm}[ht]
+\caption{Topological Ordering of DAG}\label{topologicalnodfs}
+\begin{algorithmic}[1]
+\Input\Statex{Directed acyclic graph $G$ with $n$ nodes}
+\Output\Statex{Topological ordering of $G$}
+\Function{$TopologicalOrdering$}{$G$}
+\If{$G$ is empty}
+\State{return}
+\EndIf
+\State{Find a sink node $v$ in $G$}
+\State{set $f(v)=n$}
+\State{$TopologicalOrdering(G-\{v\})$}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+The algorithm using DFS is shown in Algorithm \ref{topologicaldfs}.
+\begin{algorithm}[ht]
+\caption{Topological Ordering of DAG - DFS}\label{topologicaldfs}
+\begin{algorithmic}[1]
+\Input\Statex{Directed acyclic graph $G$ with $n$ nodes, unexplored}
+\Output\Statex{Topological ordering of $G$}
+\Function{$DFSLoop$}{$(G)$}
+\State{$current\_label=n$}
+\For{each $v$ in $G$}
+\If{$v$ not explored}
+\State{$DFS(G,v)$}
+\EndIf
+\EndFor
+\EndFunction
+
+\Function{$DFS$}{$G,s$} 
+\State{Mark $s$ as explored}
+\For{each edge $(s,v)$}
+\If{$v$ not explored}
+\State{$DFS(G,v)$}
+\EndIf
+\EndFor
+\State{$f(v)=current\_label--$}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+\subsection{Strongly Connected Components}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
