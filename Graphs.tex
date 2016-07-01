@@ -53,13 +53,35 @@ A lot of problems in reality can be reduced to a minimum cut problems:
 \Input\Statex{An undirected graph $G=(V,E)$ in which parallel edges are allowed.}
 \Output\Statex{A cut $(A,B)$ with minimum number of crossing edges}
 \While{There are more than 2 vertices left}
-\State{Pick a remaining edge $(u,v)$ randomly}
+\State{Pick a remaining edge $(u,v)$ randomly}\label{randomselection}
 \State{Merge(or contract) $u,v$ into a single vertex}
 \State{Remove self-loops}
 \EndWhile
 \State{Return cut represented by 2 final vertices}
 \end{algorithmic}
 \end{algorithm}
+\subsection{Probability of Correctness}
+Algorithm \ref{randomcontraction} is not guaranteed to always return a minimum cut. We have to iterate the whole algorithm multiple times and choose the cut with minimum number of crossing edges obtained during the process. In order to estimate the number of iterations needed, we will calculate the probability that a specific minimum cut $(A,B)$ is returned in one iteration.
+
+If one of the crossing edges of $(A,B)$ is selected in step \ref{randomselection}, the minimum cut cannot be returned. If there are $k$ crossing edges in $(A,B)$, the probability that a crossing edge is selected at the first iteration is $k/m$. The number of edges decrease by an indefinite number at each iteration, while the number of vertices decrease by exactly 1 each time. Thus it is preferable to express the probability in terms of $n$ instead of $m$.
+
+Each vertex $v$ is related to a cut $({v},V-{v})$. The number of crossing edges of this cut is the number of edges incident on $v$, i.e. the degree of $v$. Considering the definition of minimum cut, this number must be larger than $k$. We also know the sum of the degrees of all vertices: $\sum\limits_{v}degree(v)=2m$. Thus we have $2m=\sum\limits_{v}degree(v)>kn$. Hence the probability that a crossing edge is not selected at the first iteration in step \ref{randomselection} is $$1-k/m>2/n.$$
+
+At the second iteration, the same argument still holds. Let $m'$ represent the number of remaining edges after the first iteration. We have $2m'=\sum\limits_{v}degree(v)>k(n-1)$. Thus the probability that a crossing edge is selected at the 2nd iteration under the condition that no crossing edge was selected at the 1st iteration is $$1-k/m'>2/(n-1)$$.
+
+The same argument continues further until the last iteration, i.e. the $(n-2)^{th}$ iteration. Finally, the probability that no crossing edge is selected in the whole process, thus resulting in the minimum cut $(A,B)$ is
+\begin{align*}
+P(A,B)&>\left(1-\frac{2}{n}\right)\left(1-\frac{2}{n-1}\right)\cdots\left(1-\frac{2}{n-(n-3)}\right)\\
+&=\frac{(n-2)\cdot(n-3)\cdots 2\cdot 1}{n\cdot(n-1)\cdots 4\cdot 3}\\
+&=\frac{2}{n(n-1)}>\frac{1}{n^2}.
+\end{align*}
+The probability seems small, but it already makes great advancement when compared with brute-force method, in which case the probability to obtain $(A,B)$ in an iteration is $\frac{1}{2^n}$.
+
+After $N$ iterations, the probability that $(A,B)$ has not been found is 
+\begin{equation*}
+P(not\:found)<\left(1-\frac{1}{n^2}\right)^N\leq e^{-\frac{N}{n^2}}.
+\end{equation*}
+If $N=n^2$, the probability is smaller than $1/e$. If $N=n^2\ln n$, it is smaller than $1/n$. 
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
