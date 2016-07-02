@@ -105,7 +105,7 @@ Graph search is widely used for various purposes:
 \item $\dots$
 \end{itemize}
 We will introduce a few fast algorithms based on graph search. Graph search usually starts from a source vertex. When searching the graph, we want to find everything that is findable, i.e. every vertex reachable from the source via a path. Moreover, we never explore anything twice. In terms of running time, our goal is $O(m+n).$ 
-\subsection{Algorithm}
+
 BFS explores the nodes of a graph in layers. Nodes with the same distances from the source are in the same layer. It can be used to compute shortest paths of graphs, and to compute connected components of undirected graphs. It guarantees $O(m+n)$ running time. The general pattern of BFS is shown in Algorithm \ref{bfs}.
 \begin{algorithm}[ht]
 \caption{Breadth First Search(BFS)}\label{bfs}
@@ -187,7 +187,7 @@ DFS can be implemented by mimicking BFS in Algorithm \ref{bfs}. A stack should b
 \Input\Statex{Graph $G$ with all vertices unexplored}
 \Statex{Source vertex $s$}
 \Output\Statex{$G$ with all vertices reachable from $s$ explored.}
-\Function{$DFS$}{$G,s$} 
+\Function{$DFS$}{Graph $G$, node $s$} 
 \State{Mark $s$ as explored}
 \For{each edge $(s,v)$}
 \If{$v$ not explored}
@@ -220,7 +220,7 @@ A sink node is a perfect candidate for the last position in the topological orde
 \begin{algorithmic}[1]
 \Input\Statex{Directed acyclic graph $G$ with $n$ nodes}
 \Output\Statex{Topological ordering of $G$}
-\Function{$TopologicalOrdering$}{$G$}
+\Function{$TopologicalOrdering$}{Graph $G$}
 \If{$G$ is empty}
 \State{return}
 \EndIf
@@ -237,7 +237,7 @@ The algorithm using DFS is shown in Algorithm \ref{topologicaldfs}. A loop over 
 \begin{algorithmic}[1]
 \Input\Statex{Directed acyclic graph $G$ with $n$ nodes, unexplored}
 \Output\Statex{Topological ordering of $G$}
-\Function{$DFSLoop$}{$(G)$}
+\Function{$DFSLoop$}{Graph $G$}
 \State{$current\_label=n$}
 \For{each $v$ in $G$}
 \If{$v$ not explored}
@@ -246,18 +246,90 @@ The algorithm using DFS is shown in Algorithm \ref{topologicaldfs}. A loop over 
 \EndFor
 \EndFunction
 
-\Function{$DFS$}{$G,s$} 
+\Function{$DFS$}{Graph $G$, node $s$} 
 \State{Mark $s$ as explored}
 \For{each edge $(s,v)$}
 \If{$v$ not explored}
 \State{$DFS(G,v)$}
 \EndIf
 \EndFor
-\State{$f(v)=current\_label--$}
+\State{$f(s)=current\_label--$}
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
 \subsection{Strongly Connected Components}
+The concept of connectivity in directed graphs is different from that in undirected graphs.
+\begin{definition}
+Strong connected components (SCCs) of a directed graph $G(V,E)$ are equivalence classes of the equivalence relation $u\sim v$, in which $u,v\in V$ and $u\sim v\iff\exists$ path from $u$ to $v$ as well as from $v$ to $u$.
+\end{definition}
+Algorithm \ref{twopassscc} computes all SCCs of a directed graph by running DFS twice, thus in $O(m+n)$ time. In the end, vertices with the same ``leader'' are in the same SCC. An example is provided in Figure \ref{egscc}.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{egscc.jpg}
+\caption{Example of Algorithm \ref{twopassscc}}\label{egscc}
+\end{figure}
+\begin{algorithm}[ht]
+\caption{Kosaraju's 2-Pass SCC Algorithm - DFS}\label{twopassscc}
+\begin{algorithmic}[1]
+\Input\Statex{Directed graph $G(V,E)$ with $n$ nodes labeled 1 to $n$}
+\Output\Statex{SCCs of $G$}
+\State{Reverse $G$ to get $G^{rev}$}
+\State{\color{blue}1$^{st}$ loop: $DFSLoop(G^{rev})$}
+\State{\color{red}2$^{nd}$ loop: $DFSLoop(G)$}
+\Function{$DFSLoop$}{Graph $G$}
+\State{Set all nodes unexplored}
+\State{$t\coloneqq 0$, $s\coloneqq null$}\Comment{$t$: finish time. $s$: current leader}
+\State{\color{red}2$^{nd}$ loop only: Relabel nodes according to $f(i)$}
+\For{$i$ = $n$ \textbf{to} 1}
+\If{$i$ not explored}
+\State{\color{red}2$^{nd}$ loop only: $s\coloneqq i$}
+\State{$DFS(G,i)$}
+\EndIf
+\EndFor
+\EndFunction
+\Function{$DFS$}{Graph $G$, node $i$}
+\State{Mark $i$ as explored}
+\State{\color{red}2$^{nd}$ loop only: $leader(i)\coloneqq s$}
+\For{each arc $i\rightarrow j\in E$}
+\If{$j$ not explored}
+\State{$DFS(G,j)$}
+\EndIf
+\State{\color{blue}1$^{st}$ loop only: $f(i)\coloneqq ++t$}
+\EndFor
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+The SCCs of a directed graph induce a meta-DAG. The meta-nodes are the SCCs, while its arcs are the original arcs between different SCCs, as shown in Figure \ref{metagraph}. It is guaranteed to be a DAG because the existence of any loop in the meta-graph will force a few SCCs to collapse into one big SCC.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{metagraph.jpg}
+\caption{Meta-graph induced by SCCs}\label{metagraph}
+\end{figure}
+
+DFS from a node is guaranteed to reach all other nodes in the same SCC, but it will also reach other SCCs as long as there exist outgoing arcs from this SCC, which are also outgoing arcs in the meta-DAG. Sink nodes in the meta-DAG do not have outgoing arcs, thus the correspondent SCC can be isolated if we start a DFS from one node in this SCC. Algorithm \ref{twopassscc} does exactly this. In order to prove its correctness we need the following lemma.
+\begin{lemma}\label{keylemmascc}
+Consider two adjacent SCCs of $G$: $C_1$ and $C_2$ such that $\exists$ arc $i\rightarrow j$ in which $i\in C_1,\:j\in C_2$. Let $f(v)$ denote the finishing time determined in the 1$^{st}$ loop of Algorithm \ref{twopassscc} for node $v$. Then we must have
+$$\max\limits_{v\in C_1}f(v)<\max\limits_{v\in C_2}f(v).$$
+\end{lemma}
+\begin{proof}
+In $G^{rev}$, there exists arc $j\rightarrow i$. Let $v$ represent the first vertex in $C_1\cup C_2$ to be explored. $v$ can be in either $C_1$ or $C_2$, as shown in Figure \ref{prooflemmascc}.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{prooflemmascc.jpg}
+\caption{Proof of Lemma \ref{keylemmascc}}\label{prooflemmascc}
+\end{figure}
+
+If $v\in C_1$, then none of the nodes in $C_2$ will be explored before all nodes in $C_1$ are explored, because there exists no arc from $C_1$ to $C_2$. Thus we have $f(v_1)<f(v_2),\:\forall v_1\in C_1, v_2\in C_2$, which is a stronger conclusion than our original argument in the lemma.
+
+If $v\in C_2$, DFS for $v$ won't finish before DFSs for all nodes in $C_2$ finish. In particular, DFS for $j$ won't finish before DFS for all nodes in $C_1$ finish. Hence $v$ will have the largest $f$ value amongst all nodes in $C_1\cup C_2$, and we have $f(v)=\max\limits_{i\in C_2}f(i)>\max\limits_{i\in C_1}f(i)$ 
+\end{proof}
+
+An obvious corollary of Lemma \ref{keylemmascc} is as follow.
+\begin{corollary}\label{corollaryscc}
+$\max\limits_{v\in V}f(v)$ must lie in a sink SCC, i.e. an SCC that has no outgoing arc. 
+\end{corollary}
+Therefore, by starting from the node with the largest $f$ value in the 2$^{nd}$ loop, we are guaranteed to explore a sink SCC of $G$ first. Nodes in this sink SCC are ruled out from further exploration because there have been marked as explored. Every time we set up a new leader, it is guaranteed to be the node with the largest $f$ value amongst all unexplored nodes. DFS from the leader will reach and will only reach nodes in the same SCC as the leader, which is a sink SCC of the unexplored part of the graph. The SCCs will be found one by one.
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
