@@ -330,6 +330,61 @@ An obvious corollary of Lemma \ref{keylemmascc} is as follow.
 $\max\limits_{v\in V}f(v)$ must lie in a sink SCC, i.e. an SCC that has no outgoing arc. 
 \end{corollary}
 Therefore, by starting from the node with the largest $f$ value in the 2$^{nd}$ loop, we are guaranteed to explore a sink SCC of $G$ first. Nodes in this sink SCC are ruled out from further exploration because there have been marked as explored. Every time we set up a new leader, it is guaranteed to be the node with the largest $f$ value amongst all unexplored nodes. DFS from the leader will reach and will only reach nodes in the same SCC as the leader, which is a sink SCC of the unexplored part of the graph. The SCCs will be found one by one.
+\section{Dijkstra's Shortest Path Algorithm}
+If all edges in a graph have equal lengths, the shortest path problem can be solved by BFS, as discussed in Algorithm \ref{shortestpath}. Dijkstra's algorithm computes shortest paths when edges have different lengths.
+\begin{description}
+\item[Input]Directed graph $G(V,E)$. Each edge $e\in E$ has non-negative length $l_e$. A source vertex $s$.
+\item[Output]For each $v\in V$, compute the length of shortest path from $s$ to $v$ in $G$.
+\end{description}
+For convenience, we assume that there exists a path from $s$ to any vertex in $G$. 
+\subsection{Algorithm}
+Dijkstra's algorithm is shown in Algorithm \ref{dijkstra}.
+\begin{algorithm}[ht]
+\caption{Dijkstra's Shortest Path Algorithm}\label{dijkstra}
+\begin{algorithmic}[1]
+\Input\Statex{Directed graph $G(V,E)$. Each edge $e\in E$ has non-negative lengths $l_e$}
+\Statex{Source vertex $s$}
+\Output\Statex{Shortest path from $s$ to $v$ for all $v\in V$}
+\State{Initialize $X=\{s\}$}\Comment{$X$: vertices processed so far}
+\State{$A[s]=0$}\Comment{$A[v]$: length of shortest path from $s$ to $v$}
+\State{$B[s]= empty\:path$}\Comment{$B[v]$: shortest path from $s$ to $v$}
+\While{$X\neq V$}
+\State{Among all edges $v\rightarrow w$ with $v\in X,w\notin X$, choose $v^*\rightarrow w^*$ that minimizes $A[v]+l_{vw}$}\Comment{Let's call it ``Dijkstra's greedy score''}
+\State{$X\coloneqq X\cup\{w^*\}$}
+\State{$A[w^*]\coloneqq A[v^*]+l_{v^*w^*}$}
+\State{$B[w^*]\coloneqq B[v^*]+v*\rightarrow w^*$}
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+\subsection{Correctness}
+The correctness of Dijkstra's algorithm can be proved by induction.
+\begin{proof}
+We will try to prove by induction that after each iteration,$\forall v\in X$, $B[v]$ is the shortest path from $s$ to $v$, and $A[v]$ is the length of the shortest path. 
+
+At the beginning, $X=\{s\}$, $A[s]=0$, $B[s]=empty\:path$. Obviously the conclusion is correct. Let's assume that it holds before an iteration, and in this iteration we have chosen the edge $v^*\rightarrow w^*$. In order to add $w^*$ to $X$, we have to prove that $B[v^*]+v^*\rightarrow w^*$ with length $A[v^*]+l_{v^*w^*}$ is the shortest path from $s$ to $w^*$.
+
+Take any path $S$ from $s$ to $w^*$. It has to cross the boundary between $X$ and $V-X$ somewhere. Suppose the edge from $X$ to $V-X$ is $y\rightarrow z$. This path can be divided into 3 segments:
+\begin{enumerate}
+\item $S_1$: from $s$ to $y$. According to our assumption, it is at least as long as $A[y]$: $L(S_1)\geq A[y]$.
+\item $S_2$: the edge $y\rightarrow z$. $L(S_2)=l_{yz}.$
+\item $S_3$: from $z$ to $w$. All edges have non-negative length, thus $L(S_3)\geq 0.$
+\end{enumerate}
+Dijkstra's algorithm guarantees that 
+$$A[v^*]+l_{v^*w^*}\leq A[y]+l_{yz}.$$
+Thus we have 
+$$L(S)=L(S_1)+L(S_2)+L(S_3)\geq A[y]+l_{yz}\geq A[v^*]+l_{v^*w^*}.$$
+Therefore, $B[v^*]+v^*\rightarrow w^*$ is the shortest path from $s$ to $w^*$.
+\end{proof}
+\subsection{Implementation and Running Time}
+A naive implementation of Dijkstra's algorithm can take as long as $O(nm)$ time to run: in each iteration, we have to scan through all edges to find $v^*\rightarrow w^*$. In order to speed up the execution, we have to turn to the heap data structure.
+
+Heap is a data structure designed to perform insertion and extraction of minimum in $O(\log n)$ time. Conceptually, a heap is an almost perfectly balanced binary tree (null leaves are only allowed at the lowest level). The key of each node must be smaller (or equal to) that of its two children. This property guarantees that the node with the smallest key is at the root. Insertion is performed by adding the element behind the last node and bubbling up, while extraction of minimum is performed by swapping the root and the last node and then bubbling down. The height of the tree is $O(\log n)$, thus insertion and extraction of minimum can be executed in $O(\log n)$ time. 
+
+In the implementation of Dijkstra's algorithm, we use a heap to store the vertices in $V-X$. The key of a node is the smallest Dijkstra's greedy score related to this vertex, i.e. for $v\in V-X$, $key[v]$ is the smallest value of $A[u]+l_{uv},\forall u\in X$. If such edge $u\rightarrow v$ does not exist, $key[v]=+\infty.$ In each iteration of Dijkstra's algorithm, we extract the minimum of the heap and denote it with $w$. Now we should have $w\in X$, and $A[w]$ is the length of the shortest path from $s$ to $w$. Then for all edges $w\rightarrow v$ with $v\in V-X$, we update the key of $v$:
+$$key[v]\coloneqq\min\{A[w]+l_{wv},key[v]\}.$$
+If $key[v]$ is changed here, we bubble it down in the heap, which is a $O(\log n)$ operation. In this way the heap gets maintained at each iteration.
+
+In total, we do $n-1$ extractions of minimum, and at most $m$ bubbling down of element in the heap. Each of these operations is $O(\log n)$, thus the total time consumption is $O((m+n)\log n)$. Since the graph is weakly connected ($\forall v\exists$ path from $s$ to $v$), we have $m\geq n-1$, hence $O(m+n)=O(m)$. In conclusion, the running time of Dijkstra's algorithm implemented using heap is $O(m\log n)$.
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
