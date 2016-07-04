@@ -1,0 +1,62 @@
+\ifx\PREAMBLE\undefined
+\input{preamble}
+\begin{document}
+\fi
+\chapter{Data Structures}
+Data structures help us organize data so that it can be accessed quickly and usefully. Different data structures support different sets of operations, thus are suitable for different tasks.
+\section{Heap}
+A heap, also named a priority queue, is a container for objects with comparable keys. It should support at least two basic operations: insertion of new object, and extraction(i.e. removal) of the object with minimum\footnote{A heap can also support extraction of object with maximum key, but extract-min and extract-max cannot be supported simultaneously.} key. Both operations are expected to take $O(\log n)$ time. Typical heap implementations also support deletion of an object from the key, which is also $O(\log n)$. The construction of a heap, namely ``heapify'', takes $O(n)$ rather than $O(n\log n)$.
+\subsection{Use Cases}
+Heap can be used for sorting. First construct a heap with the $n$ items to be sorted, and then execute extract-min $n$ times. The process takes $O(n\log n)$ time, which is already the optimal running time for comparison based sorting algorithms. 
+
+We've already covered the use of a heap to accelerate Dijkstra's algorithm in the previous chapter.
+
+An interesting use case of heap is median maintenance. We define the median of a sorted sequence of $n$ items $x_1,\dots,x_n$ to be $x_{(n+1)/2}$, for example $x_4$ for 8 items and $x_5$ for 9 items. 
+\begin{description}
+\item[Input]A sequence of unsorted items $x_1,x_2,\dots,x_n$ provided one-by-one.
+\item[Output]At each step $i$, calculate the median of $x_1,\dots,x_i$ in $O(\log i)$ time.
+\end{description}
+The problem can be solved using two heaps, as shown in Algorithm \ref{medianmaintenance}. For convenience, we assume that the heaps used here supports not only the extraction of min/max, but also checking the key value of the min/max without removing it.
+\begin{algorithm}[ht]
+\caption{Median Maintenance using Heaps}\label{medianmaintenance}
+\begin{algorithmic}[1]
+\InputOutput\Statex{see above}
+\State{Initialize empty MaxHeap that supports extract-max}\Comment{Stores smaller half}
+\State{Initialize empty MinHeap that supports extract-min}\Comment{Stores larger half}
+\For{$i$ = 1 \textbf{to} $n$}
+\If{$x_i<$ MaxHeap.checkMax()}\Comment{Should insert into smaller half}
+\State{MaxHeap.insert($x_i$)}
+\Else\Comment{insert into larger half}
+\State{MinHeap.insert($x_i$)}
+\EndIf
+\If{MinHeap.size() - MaxHeap.size() == 2}\Comment{If unbalanced, balance the two halves}
+\State{MaxHeap.insert(MinHeap.extractMin()}
+\ElsIf{MaxHeap.size() - MinHeap.size() == 2}
+\State{MinHeap.insert(MaxHeap.extractMax()}
+\EndIf
+\If{MinHeap.size() $>$ MaxHeap.size()}\Comment{Set median}
+\State{median = MinHeap.checkMin()}
+\Else\State{median = MaxHeap.checkMax()}
+\EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+\subsection{Implementation}
+A heap can be conceptually thought of as a binary tree that is as complete as possible, i.e. null leaves are only allowed at the lowest level. The key of any node should be smaller than or equal to keys of its children, if there are any. This guarantees that the object at the root of the tree has the smallest key. This tree can be implemented as an array, with the root at the first position, and nodes at lower levels sequentially concatenated afterwards. If the array $A$ is 1-indexed, then the parent of $A[i]$ is $A[i/2]$, and the children of this node are $A[2i]$ and $A[2i+1]$.
+
+With the array representation of heap, insertion can be implemented as follow:
+\begin{itemize}
+\item Put the new object at the end of the array.
+\item As long as the key of the new object is smaller than that of its parent, bubble it up.
+\end{itemize}
+And extract-min can be implemented as follow:
+\begin{itemize}
+\item Remove the root.
+\item Move the last object in the array to the first position.
+\item As long as the key of the object at the root is larger than that of at least one of its children, sink it down. If the keys of both children are smaller, the child with smaller key should be used in the sink-down.
+\end{itemize}
+The height of the tree is $O(\log n)$, thus either bubble-up or sink-down can be executed at most $O(\log n)$ times, which guarantees that the two operations take $O(\log n)$ running time.
+\section{Balanced Binary Search Tree}
+\ifx\PREAMBLE\undefined
+\end{document}
+\fi
