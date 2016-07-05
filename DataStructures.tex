@@ -57,6 +57,56 @@ And extract-min can be implemented as follow:
 \end{itemize}
 The height of the tree is $O(\log n)$, thus either bubble-up or sink-down can be executed at most $O(\log n)$ times, which guarantees that the two operations take $O(\log n)$ running time.
 \section{Balanced Binary Search Tree}
+Sorted array supports quick search of an element in $O(\log n)$ time, but it takes $O(n)$ time to insert or delete an element. Binary search tree is a data structure that supports both quick search and quick insertion/deletion. 
+
+Each node of a BST contains the key and three pointers to other nodes: the left child, the right child and the parent. Some of the three pointers can be null. The most important property of BST is that for any node, all nodes in its left child has smaller keys than itself, while all nodes in its right key has larger keys. The height of a BST is at least $\log n$ and at most $n$. A \textbf{balanced} BST supports search, insertion and deletion in $O(\log n)$ time. But if it's not balanced, these operations can take as long as $O(n)$ time.
+
+\begin{algorithm}[ht]
+\caption{BST Operations}\label{bstoperations}
+\begin{algorithmic}[1]
+\Function{search}{k}
+\State{node = root}
+\While{node != null \textbf{and} node.key != k}
+\If{k $<$ node.key}
+\State{node = node.left}
+\Else\State{node = node.right}
+\EndIf
+\EndWhile
+\State{return node}
+\EndFunction
+\Function{insert}{k}
+\State{node = root}
+\While{node != null}
+\If{k $<$ node.key}
+\State{node = node.left}
+\Else\State{node = node.right}
+\EndIf\EndWhile
+\State{node = Node(k)}
+\EndFunction
+\Function{max}{node}\Comment{min similar}
+\If{node == null}
+\State{return null}
+\Else
+\While{node.right != null}
+\State{node = node.right}
+\EndWhile
+\State{return node}
+\EndIf
+\EndFunction
+\Function{successor}{node}\Comment{predecessor similar}
+\State{assert(node != null)}
+\If{node.right != null}
+\State{return node.right}
+\Else
+\State{k = node.key}
+\While{node.parent != null \textbf{and} node.parent.key $<$ k}
+\State{node = node.parent}
+\EndWhile
+\State{return node.parent}
+\EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
