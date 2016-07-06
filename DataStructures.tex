@@ -113,7 +113,120 @@ With this information, we can find the node with the $i^{th}$ largest key among 
 \item If $size(n.left) > i - 1$, return the node with the $i^{th}$ largest key in the left subtree.
 \item If $size(n.left) < i - 1$, return the node with the $(i-size(n.left)-1)^{th}$ largest key in the right subtree.
 \end{itemize}
-\subsection{Red Black Tree}
+\subsection{Red-Black Tree}
+The height of a BST can vary between $O(\log n)$ and $O(n)$. Balanced BSTs are  guarantees to have $O(\log n)$ height, thus ensuring the efficiency of operations on it. Red-black trees is an implementation of balanced BST. In addition to the key and pointers to the parent and children, nodes in a red-black tree also stores a bit to indicate whether the node is red or black. The following conditions are satisfied by a red-black tree:
+\begin{enumerate}
+\item Each node is either red or black;
+\item The root is black;\label{redblackcondition2}
+\item There can never be two red nodes in a row, i.e. red nodes must have black parents and children;\label{redblackcondition3}
+\item Every root $\rightarrow$ null path has the same number of black nodes.\label{redblackcondition4}
+\end{enumerate}
+\begin{theorem}
+The height of a red-black tree with $n$ nodes is smaller than or equal to $O(2\log(n+1))$.
+\end{theorem}
+\begin{proof}
+Suppose all root $\rightarrow$ null paths contain $k$ black nodes. Then the red-black contains at lest $k$ complete levels, because otherwise there would exist root $\rightarrow$ null paths with fewer than $k$ nodes, thus of cause fewer than $k$ black nodes. Therefore we have 
+$$n\geq 1 + 2 + \dots + 2^{k-1} = 2^k-1,$$
+which means $k\leq\log(n+1).$ Suppose the height of the tree is $h$. According to condition \ref{redblackcondition3}, we hereby come to the conclusion 
+$$h\leq 2k\leq 2\log(n+1).$$
+\end{proof}
+An important idea in the implementation of red-black tree is rotation, as illustrated in Figure \ref{rotations}. It alters the structure of the tree in a way that makes the tree more balanced, whilst preserves the BST property.
+
+\begin{figure}[ht]
+\begin{subfigure}{\textwidth}
+\centering
+\begin{tikzpicture}
+\tikzstyle{subtree} = [regular polygon, regular polygon sides = 4, draw]
+\tikzstyle{singlenode} = [circle,draw]
+\node[circle, draw](1) at (0,0){1}
+child { node[subtree] {A} }
+child  { node [singlenode] {2}
+	child { node[subtree] {B} }
+	child { node[subtree] {C} }
+};
+\node[circle, draw](2)[right= 5cm of 1]{2}
+child  { node [singlenode] {1}
+	child { node[subtree] {A} }
+	child { node[subtree] {B} }
+}
+child { node[subtree] {C} };
+\draw[->,very thick] (2.3,-1.5) -- (3.3,-1.5); 
+\end{tikzpicture}
+\caption{left rotation}
+\end{subfigure}\\
+\begin{subfigure}{\textwidth}
+\centering
+\begin{tikzpicture}
+\tikzstyle{subtree} = [regular polygon, regular polygon sides = 4, draw]
+\tikzstyle{singlenode} = [circle,draw]
+\node[singlenode](1) at (0,0){1}
+child  { node [singlenode] {2}
+	child { node[subtree] {A} }
+	child { node[subtree] {B} }
+}
+child { node[subtree] {C} };
+\node[singlenode](2)[right= 3cm of 1]{2}
+child { node[subtree] {A} }
+child  { node [singlenode] {1}
+	child { node[subtree] {B} }
+	child { node[subtree] {C} }
+};
+\draw[->,very thick] (1.3,-1.5) -- (2.3,-1.5); 
+\end{tikzpicture}
+\caption{right rotation}
+\end{subfigure}
+\caption{Rotations in Red Black Tree}\label{rotations}
+\end{figure}
+
+Insertion and deletion in a red-black tree is carried out in two steps. First a normal BST insertion / BST is executed. It is probable that some of the conditions of red-black tree will be violated, thus we then modify the tree by recoloring the nodes and rotations in order to restore the conditions.
+
+When we insert a node into the red-black tree as we do for any BST, we first try to color it as red. If condition \ref{redblackcondition3} is not violated, then everything is fine. Otherwise we wind up in two possible cases, as shown in Figure \ref{redblackinsertion}, in which $x$ is the newly inserted node. 
+
+In case 1, all we need to do is a recoloring of the nodes. The red node is propagated upwards, which may possibly induce another violation of \ref{redblackcondition3}. The process can last as much as $O(\log n)$ times until we reach the root. If the root is colored red, condition \ref{redblackcondition2} will be violated, and the solution is to color it back to black. 
+
+During the upward propagation process, it is possible that we meet case 2. Tackling this case is a little bit more complex, but it can be proven that the conditions can be restored via 2-3 rotations and recolorings in $O(1)$ time.
+
+\begin{figure}[H]
+\begin{subfigure}{.6\textwidth}
+\centering
+\begin{tikzpicture}
+\tikzstyle{rednode}=[circle,draw,red]
+\tikzstyle{blacknode}=[circle,draw]
+\node[blacknode](w) at (0,0) {w}
+child {node[rednode]{z}}
+child {node[rednode]{y}
+	child{node[rednode,left]{x}}
+};
+\node[rednode](w1) [right = 3cm of w] {w}
+child {node[blacknode]{z}}
+child {node[blacknode]{y}
+	child{node[rednode,left]{x}}
+};
+\draw[->,very thick] (1.3,-1.5) -- (2.3,-1.5);
+\end{tikzpicture}
+\caption{case 1}
+\end{subfigure}
+\begin{subfigure}{.3\textwidth}
+\centering
+\begin{tikzpicture}
+\tikzstyle{rednode}=[circle,draw,red]
+\tikzstyle{blacknode}=[circle,draw]
+\tikzstyle{subtree} = [regular polygon, regular polygon sides = 4, draw]
+\node[blacknode](w2) {w}
+child {node[blacknode]{z}}
+child {node[rednode]{y}
+	child{node[rednode]{x}
+		child{node[subtree]{...}}
+		child{node[subtree]{...}}
+	}
+	child{node[subtree]{...}}
+};
+\end{tikzpicture}
+\caption{case 2}
+\end{subfigure}
+\caption{Insertion in a Red-Black Tree}\label{redblackinsertion}
+\end{figure}
+\section{Hash Table}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
