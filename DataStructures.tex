@@ -56,57 +56,64 @@ And extract-min can be implemented as follow:
 \item As long as the key of the object at the root is larger than that of at least one of its children, sink it down. If the keys of both children are smaller, the child with smaller key should be used in the sink-down.
 \end{itemize}
 The height of the tree is $O(\log n)$, thus either bubble-up or sink-down can be executed at most $O(\log n)$ times, which guarantees that the two operations take $O(\log n)$ running time.
-\section{Balanced Binary Search Tree}
-Sorted array supports quick search of an element in $O(\log n)$ time, but it takes $O(n)$ time to insert or delete an element. Binary search tree is a data structure that supports both quick search and quick insertion/deletion. 
-
-Each node of a BST contains the key and three pointers to other nodes: the left child, the right child and the parent. Some of the three pointers can be null. The most important property of BST is that for any node, all nodes in its left child has smaller keys than itself, while all nodes in its right key has larger keys. The height of a BST is at least $\log n$ and at most $n$. A \textbf{balanced} BST supports search, insertion and deletion in $O(\log n)$ time. But if it's not balanced, these operations can take as long as $O(n)$ time.
-
-\begin{algorithm}[ht]
-\caption{BST Operations}\label{bstoperations}
-\begin{algorithmic}[1]
-\Function{search}{k}
-\State{node = root}
-\While{node != null \textbf{and} node.key != k}
-\If{k $<$ node.key}
-\State{node = node.left}
-\Else\State{node = node.right}
-\EndIf
-\EndWhile
-\State{return node}
-\EndFunction
-\Function{insert}{k}
-\State{node = root}
-\While{node != null}
-\If{k $<$ node.key}
-\State{node = node.left}
-\Else\State{node = node.right}
-\EndIf\EndWhile
-\State{node = Node(k)}
-\EndFunction
-\Function{max}{node}\Comment{min similar}
-\If{node == null}
-\State{return null}
-\Else
-\While{node.right != null}
-\State{node = node.right}
-\EndWhile
-\State{return node}
-\EndIf
-\EndFunction
-\Function{successor}{node}\Comment{predecessor similar}
-\State{assert(node != null)}
-\If{node.right != null}
-\State{return node.right}
-\Else
-\State{k = node.key}
-\While{node.parent != null \textbf{and} node.parent.key $<$ k}
-\State{node = node.parent}
-\EndWhile
-\State{return node.parent}
-\EndIf
-\EndFunction
-\end{algorithmic}
-\end{algorithm}
+\section{Binary Search Tree}
+Sorted array supports quick search of an element in $O(\log n)$ time, but it takes $O(n)$ time to insert or delete an element. Binary search tree is a data structure that supports both quick search and quick insertion / deletion. 
+\subsection{Basic Operations}
+Each node of a BST contains the key and three pointers to other nodes: the left child, the right child and the parent. Some of the three pointers can be null. The most important property of BST is that for any node, all nodes in its left child has smaller keys than itself, while all nodes in its right key has larger keys. The height of a BST is at least $\log n$ and at most $n$. A \textbf{balanced} BST supports search, insertion and deletion in $O(\log n)$ time. But if it's not balanced, these operations can take as long as $O(n)$ time. Some of its basic operations are listed below.
+\begin{description}
+\item[search]In order to search for a node with a specific key value $k$:
+\begin{itemize}
+\item Start from the root node.
+\item If a node is null or its key is equal to $k$, return this node.
+\item If $k$ is smaller than its key, recursively search its left child.
+\item If $k$ is larger than its key, recursively search its right child.
+\end{itemize}
+\item[insert]In order to insert a new node with key value $k$:
+\begin{itemize}
+\item Start from the root node.
+\item If the node is null, make a new node here with key value $k$.
+\item If $k$ is smaller than its key, go to its left child.
+\item If $k$ is larger than its key, go to its right child.
+\end{itemize}
+\item[max]In order to obtain the node with the maximum key value:
+\begin{itemize}
+\item Start from the root node.
+\item If the node has right child, go to its right child.
+\item Return the node.
+\end{itemize}
+\item[min]Similar to max.
+\item[successor]In order to obtain the successor of a node with key value $k$:
+\begin{itemize}
+\item If the node has right child, return the max of its right node.
+\item Otherwise recursively go to its parent, until the key becomes larger than $k$.
+\end{itemize}
+\item[predecessor]Similar to successor.
+\item[in order traversal]In order to traverse all nodes of a BST in order:
+\begin{itemize}
+\item Start from the root node.
+\item If the node is null, stop.
+\item Recursively traverse the left child.
+\item Do something to the node, e.g. print its key.
+\item Recursively traverse the right child.
+\end{itemize}
+\item[delete]In order to delete a node with key value $k$:
+\begin{itemize}
+\item Search for the node.
+\item If it has no child, change it to null.
+\item If it has 1 child, replace it with its child.
+\item If it has 2 children, find its predecessor, who is guaranteed to have at most 1 child, and swap their keys. Then delete the node (currently at its predecessor's old position).
+\end{itemize}
+\end{description}
+Sometimes a tree node can contain some information about the tree itself, for example the size of the subtree that uses this node as root. For each node $n$, we have
+$$size(n) = size(n.left) + size(n.right) + 1.$$
+With this information, we can find the node with the $i^{th}$ largest key among all nodes:
+\begin{itemize}
+\item Start from the root node.
+\item If $size(n.left) = i - 1$, return the node.
+\item If $size(n.left) > i - 1$, return the node with the $i^{th}$ largest key in the left subtree.
+\item If $size(n.left) < i - 1$, return the node with the $(i-size(n.left)-1)^{th}$ largest key in the right subtree.
+\end{itemize}
+\subsection{Red Black Tree}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
