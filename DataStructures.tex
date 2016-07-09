@@ -227,6 +227,96 @@ child {node[rednode]{y}
 \caption{Insertion in a Red-Black Tree}\label{redblackinsertion}
 \end{figure}
 \section{Hash Table}
+\subsection{Concepts and Applications}
+Hash table is a data structure designed to efficiently maintain a (possibly evolving) set of items, such as financial transactions, IP addresses, people associated with some data, etc. It supports insertion of a new record, deletion of existing records, and lookup of a particular record (like a dictionary). Assuming that the hash table is properly implemented, and that the data is non-pathological, all these operations can be executed in $O(1)$ time: amazingly fast!
+
+Let's first introduce a few typical use cases of hash table before diving into its implementation. 
+
+Hash table can be used to solve the de-duplicates problem.
+\begin{description}
+\item[Input]A stream of objects.
+\item[Output]Unique objects in the stream, i.e. the objects with all duplicates removed.
+\end{description} 
+The problem arises when we want to record the number of unique visitors to a website, or when we want to remove duplicates in the result of a search. With a hash table on the objects implemented, we can solve the problem in linear time. Just examine the objects one by one. For each object $x$, do a lookup in the hash table $H$. If $x$ is not found in $H$, insert it into $H$ and append it to the result, otherwise just continue with the next object.
+
+Another application is the 2-sum problem.
+\begin{description}
+\item[Input]An unsorted array $A$ of $n$ integers, and a target sum $t$.
+\item[Output]Whether there exists two numbers $x,y\in A$ such that $x+y==t$.
+\end{description}
+A naive enumerative solution is $O(n^2)$. If we sort $A$ and then search for $t-x$ in $A$ for every $x\in A$, the time consumption can be reduced to $O(n\log n)$. But with hash table, the problem can be solved in merely $O(n)$ time. Just insert all items into the hash table, and then for each $x\in A$ check if $t-x$ is in $A$ via a hash table lookup.
+
+In the early days of compilers, hash table was used to implemented symbol tables. The administrator of a network can use hash table to block certain IP addresses. When exploring huge game trees of chess or Go, hash table can be used to avoid duplicate explorations of the same configuration that can appear enormous times in the tree. In the last case, the size of the tree is so large that hash table is the only plausible method to record whether a configuration has been explored.
+\subsection{Implementation}
+When implementing hash table, we should think of a generally really big universe $U$ (e.g. all IP addresses, all names, all chessboard configurations, etc), of which we wish to maintain a evolving subset $S$ of reasonable size. The general approach is as follow.
+\begin{enumerate}
+\item Pick $n$ as the number of ``buckets''. $n$ should be of size comparable with $S$.
+\item Choose a hash function $h:U\rightarrow\{0,1,2,\dots,n-1\}$.
+\item Use array $A$ of length $n$ to store the items. $x$ should be stored in $A[h(x)]$.
+\end{enumerate}
+\begin{definition}
+For a specific hash function $h$ on a universe $U$, we say there is a collision if $\exists$ distinct $x,y\in U$ such that $h(x)=h(y)$.
+\end{definition}
+Think of the famous ``same birthday'' problem: what's the number of people needed so that the probability for at least 2 of them to have the same birthday is more than 50\%? The answer is 23, which is quite a small number. This problem is an example to demonstrate that collisions are not unlikely to happen, and thus a good implementation of hash table must be able to resolve collision properly. There are two popular solutions:
+\begin{description}
+\item[Chaining]A linked list is kept in each bucket containing items with the correspondent hash value. Given an object $x$, an insertion / deletion / lookup is executed in the list $A[h(x)]$ when a correspondent operation is executed on the hash table with $x$.
+\item[Open addressing]A bucket only stores one object. The hash function specifies a probe sequence $h_1(x),h_2(x),$ etc. When an object is inserted in to the hash table, the sequence will be followed until an empty slot is found. The sequence can be linear (i.e. slots are probed consecutively), or decided by two independent hash functions.
+\end{description}
+
+For a hash table with chaining, insertions are always $\Theta(1)$ because we simply insert a new element at the front of a list, while deletions and lookups are $\Theta(list\:length)$. The maximal length of a list can be anywhere from $m/n$, which means lengths of all lists are equal, to $m$, which means all objects are in the same bucket. The situation with open addressing is similar. Obviously, the performance of an implementation depends heavily on the choice of the hash function. A good hash function should lead to good performance, i.e. data should be spread out among all hash values, and the result of the hash function should be easy to evaluate and store.
+
+A widely used method to define a hash function consists of two steps. First an object is transformed into a usually large integer, namely the hash code, and then the integer is mapped by a compression function to a number between $0$ and $n-1$, i.e. the index of a bucket. The  $mod\:n$ function can serve as the compression function. 
+
+The number of buckets $n$ must be selected with caution. It should be a prime within a constant factor of the number of objects supposed to be saved in the table, and it should not be close to a power of 2 or 10.
+\begin{definition}
+The load factor $\alpha$ of a hash table is defined as 
+$$\alpha=\frac{\text{\# of objects in the hash table}}{\text{\# of buckets in the hash table}}.$$
+\end{definition}
+Obviously, for open addressing, $\alpha$ has to be smaller than 1, whereas chaining can cope with $\alpha<1$.
+In general, $\alpha$ has to be $O(1)$ to guarantee constant running time for hash table operations. In particular, $\alpha\ll 1$ is expected for open addressing. 
+\subsection{Universal Hashing}
+We wish to fabricate a clever hash function that can spread any data set quasi-evenly among all buckets. Unfortunately such function does not exist, because any hash function has a pathological data set. The reason is that for any hash function $h:U\rightarrow\{0,1,\dots,n-1\}$, according to the Pigeonhole Principle,  there exists a bucket $i$ such that at least $\lvert U\rvert/n$ elements of $U$ hash to $i$ under $h$. If the data set is a subset of these elements, all of them will collide. This could become dangerous in real-world systems: a simple hash function can be reverse engineered and abused. 
+
+There are two solutions to this problem. Either a cryptographic hash function, e.g. SHA-2, should be used to make the reverse engineering infeasible, or a randomized approach should be taken: we should design a family $H$ of hash functions such that for any data set $S$, a randomly chosen function $h\in H$ is almost guaranteed to spread $S$ out quasi-evenly. Such a family of hash functions is called universal.
+\begin{definition}
+Let $H$ be a set of hash functions $h:U\rightarrow\{0,1,\dots,n-1\}$. $H$ is universal if and only if $\forall x,y\in U(x\neq y),$ 
+$$P(h(x)=h(y))\leq \frac{1}{n},$$
+in which $n$ is the number of buckets and $h$ is a hash function chosen uniformly at random from $H$. $1/n$ is actually the probably of a collision for pure random hashing.
+\end{definition}
+We will now provide a universal hash function family for IP addresses. Let $U$ represent the universe of all IP address of the form $(x_1,x_2,x_3,x_4)$, in which each $x_i$ is an integer between 0 and 255 inclusive. Let $n$ be a prime whose value is comparable with the number of objects in the hash table, and larger than 255. We define a hash function $h_a$ for each 4-tuple $a=(a_1,a_2,a_3,a_4)$ with each $a_i\in\{0,1,\dots,n-1\}:$
+$$h_a(x_1,x_2,x_3,x_4)=\left(\sum\limits_{i=1}^4a_ix_i\right)\mod n.$$ 
+Then the family of all $h_a$ is universal.
+\begin{proof}
+Consider two distinct IP addresses $x=(x_1,x_2,x_3,x_4)$, $y=(y_1,y_2,y_3,y_4)$, and assume that $x_4\neq y_4$. If $x$ and $y$ collide, we have 
+\begin{align*}
+\left(\sum\limits_{i=1}^4a_ix_i\right)\mod n=\left(\sum\limits_{i=1}^4a_iy_i\right)\mod n\\
+a_4(x_4-y_4)\mod n=\left(\sum\limits_{i=1}^3a_i(y_i-x_i)\right)\mod n\\
+\end{align*}
+For an arbitrarily fixed choice of $a_1,a_2,a_3$, the rhs is a fixed number between 0 and $n-1$ inclusive. With $x_4-y_4\mod n\neq 0$ (guaranteed by $n>255$ and $x_4\neq y_4$) and $a_4$ randomly chosen in $\{0,1,\dots,n-1\}$, the lhs is actually equally likely to be any of $\{0,1,\dots,n-1\}$. Therefore the probability of collision is $\frac{1}{n}$. 
+\end{proof}
+Now we would like to verify the $O(1)$ running time guarantee of hash table implemented with chaining and hash function $h$ selected randomly from a universal family $H$. Here we assume that $\lvert S\rvert=O(n)$, i.e. $\alpha=\frac{\lvert S\rvert}{n}=O(1)$, and that it takes $O(1)$ to evaluate the hash function. 
+\begin{proof}
+As discussed before, the running time of basic operations on a hash table implemented with chaining is $O(list\:length)$. So here we will try to prove that the expectation of the list length $L$ is $O(1)$. 
+
+For a specific list corresponding to hash value $h(x)$, we define 
+\begin{equation*}
+Z_y=\begin{cases}
+1\text{ if }h(y)=h(x)\\
+0\text{ otherwise}\\
+\end{cases}
+\end{equation*}
+for any $y\in S$. Then obviously $L=\sum\limits_{y\in S}Z_y$. Thus we have
+\begin{align*}
+E[L]&= \sum\limits_{y\in S}E[Z_y]=\sum\limits_{y\in S}P(h(y)=h(x))\\
+&\leq\sum\limits_{y\in S}\frac{1}{n}=\frac{\lvert S\rvert}{n}=O(1).
+\end{align*}
+\end{proof}
+The running time of operations on hash table implemented with open addressing is hard to analyze. We will use a heuristic assumption that all $n!$ probe sequences are equally possible, which is indeed not true but facilitates an idealized quick analysis. Under this heuristic assumption, the expected running time of operations is $\frac{1}{1-\alpha}$. 
+\begin{proof}
+A random probe finds an empty slot with probability $1-\alpha$. A random probe sequence can be regarded as repetitions of random probes\footnote{Actually the probability for probes after the first probe to find an empty slot is larger, because we don't examine the same slot twice. The running time $\frac{1}{1-\alpha}$ is an upper bound.}. Thus the expectation of the number of probes needed for finding an empty slot is $\frac{1}{1-\alpha}$.
+\end{proof}
+For linear probing, the heuristic assumption is deadly wrong. So we assume instead that the initial probe is random, which is again not true in practice. Knuth proved in 1962 that the expected running time of an insertion under this assumption is $\frac{1}{(1-\alpha)^2}$.
+\section{Bloom Filters}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
