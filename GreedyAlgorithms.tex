@@ -1,0 +1,34 @@
+\ifx\PREAMBLE\undefined
+\input{preamble}
+\begin{document}
+\fi
+\chapter{Greedy Algorithms}
+In the field of algorithm design, there is no silver bullet suitable for all kinds of problems. We have covered divide-and-conquer paradigm and randomized algorithms. We will now introduce greedy algorithms, and in the next chapter we will dive into dynamic programming.
+
+In a greedy algorithm, ``myopic'' decisions are made iteratively, in the hope that finally we will end up with a correct solution to the problem. Dijkstra's algorithm is actually a greedy algorithm. In contrast with divide-and-conquer algorithms, greedy algorithms have the following features:
+\begin{itemize}
+\item It is easy to propose multiple greedy algorithms for many problems.
+\item It is relatively easy to analyze running times of greedy algorithms.
+\item It is hard to establish the correctness of greedy algorithms. Proofs are usually ad-hoc. General approaches include induction (e.g. for Dijkstra) and ``exchange argument'', which will be covered later.
+\item Most greedy algorithms are unfortunately incorrect.
+\end{itemize}
+
+A problem that can theoretically be solved by a greedy algorithm is the caching problem. Modern computers contain caches, sometimes a few layers. On a cache miss that happened at a page request, we have to evict something from the cache in order to make room for the newly requested page that is not in the cache. The choice of the item to evict influences greatly the number of cache misses. Some misses are inevitable, while others happen can be avoided by wise eviction choices. 
+
+It can be proved via exchange argument that the ``furthest-in-future'' algorithm in the optimal solution to this problem. The algorithm always evicts the item that will take the longest time to be requested again. Although its correctness can be verified, this algorithm obviously cannot be implemented. Nonetheless it is useful as a guideline for practical algorithms like LRU(least-recently-used) algorithm, and it also serves as an idealized benchmark for caching algorithms.
+\section{Scheduling}
+\begin{description}
+\item[Input]A set of $n$ jobs (e.g. processes) that have to use a shared resource (e.g. a processor) exclusively. Each job $j$ has a length $l_j$ and a weight $w_j$. 
+\item[Output]An order to execute the jobs that minimizes the weighted sum of completion times $\sum\limits_{j=1}^{n}w_jC_j.$
+\end{description}
+Two simple cases of the problem are when the jobs have the same lengths / weights. If they have the same length, jobs with larger weights should be scheduled earlier, whereas if they are of the same weight, jobs with shorter lengths should go first. The scenarios might be extended to handle more general cases if we are able to resolve conflicts: what if $w_i>w_j$ and $l_i>l_j$? This can be achieved by assigning scores to jobs, and scheduling jobs with higher scores in front. The score has to increase with weight and decrease with length. Two intuitive choices are 
+\begin{itemize}
+\item $w_j-l_j$
+\item $w_j/l_j$
+\end{itemize}
+A simple 2-job case with $l_1=5,\allowbreak w_1=3$ and $l_2=2,\allowbreak w_2=1$ rules the first option out. We will try to prove the correctness of the second option, which is absolutely not trivial.
+
+
+\ifx\PREAMBLE\undefined
+\end{document}
+\fi
