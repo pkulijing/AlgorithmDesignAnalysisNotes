@@ -317,6 +317,33 @@ A random probe finds an empty slot with probability $1-\alpha$. A random probe s
 \end{proof}
 For linear probing, the heuristic assumption is deadly wrong. So we assume instead that the initial probe is random, which is again not true in practice. Knuth proved in 1962 that the expected running time of an insertion under this assumption is $\frac{1}{(1-\alpha)^2}$.
 \section{Bloom Filters}
+Bloom filter is another data structure that facilitates fast insertions and lookups besides hash tables. It uses much less space than hash table, at the price of the following shortcomings:
+\begin{itemize}
+\item It cannot store associated objects;
+\item It does not support deletions;
+\item There is a small probability of false positive for the lookup result.
+\end{itemize} 
+Historically, bloom filters are used to implement spell-checkers. A canonical use case is to forbid passwords of certain patterns. It is also used in network routers to complete tasks like banning certain IP addresses. It is desirable in such  environment because memory is limited, the lookups are supposed to be super-fast and occasional false positives are tolerable. 
+
+Basic ingredients of a bloom filter includes an array $A$ of $n$ bits and $k$ hash functions $h_i,i=1,,2\dots,k$. To insert element $x$, we set $A[h_i(x)] = 1$ for all $i$. To do a lookup for $x$, we return true if we find that $A[h_i(x)]$ = 1 for all $i$. It is obvious that if all bits related to element $x$ via the $k$ hash functions have been set to 1 before $x$ itself is inserted, false positive will happen in a lookup for $x$. If the probability of false positive is too big, bloom filter should never be used. We will use heuristic analysis to illustrate that this probability is very small in reality.
+
+We assume that across different $i$ and $x$, all $h_i(x)$ are uniformly random and independent. The assumption is generally not true, but it helps to understand the trade-off between space and error in bloom filters. 
+
+We would like to insert a data set $S$ into a bloom filter using $n$ bits. The probability that a certain bit has been set to 1 after inserting $S$ is
+\begin{equation}\label{bloomfilterheuristic}
+1- \left(1-\frac{1}{n}\right)^{k\lvert S\rvert}\leq 1-e^{-k\lvert S\rvert/n}=1-e^{-k/b},
+\end{equation}
+in which $b$ is the number of bits per object $\frac{n}{\lvert S\rvert}.$ When $n$ is quite large, \eqref{bloomfilterheuristic} almost takes the equal sign. For an element not in $S$, the probability of a false positive is 
+\begin{equation*}
+\epsilon=\left(1-e^{-k/b}\right)^k.
+\end{equation*}
+Let $t=-k/b$, then we have
+\begin{align*}
+\ln\epsilon&=-bt\ln(1-e^{-t})\\
+\dv{\ln\epsilon}{t}&=-\frac{b}{e^t-1}\left(t+(e^t-1)\ln(1-e^{-t})\right).\\
+\end{align*}
+When $t=\ln 2$, $\dv{\ln\epsilon}{t}=0$ and $\epsilon$ gets minimized. Thus we should use $k=(ln 2)b\approx 0.693b.$ With $b=8$, we should choose $k=5$ or 6, and $\epsilon$ will be approximately 2\%. 
+
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
