@@ -68,7 +68,7 @@ $(\Leftarrow)$The proof is trivial. Just take vertex $u\in A$ and $v\in B$. Ther
 
 $(\Rightarrow)$Suppose there exists no edge between $u,v$. Take $A=\{$All vertices reachable from $u\}$, i.e. the connected component of $u$, $B=\{$All other vertices$\}$, i.e. other connected components. Then there exists no crossing edges of the cut $(A,B)$.
 \end{proof}
-\begin{lemma}
+\begin{lemma}\label{doublecrossinglemma}
 \textbf{(Double Crossing Lemma)}
 Suppose the cycle $C\subseteq E$ has an edge crossing the cut $(A,B)$, then there must exist some other edge $e\in C$ that crosses the same cut.
 \end{lemma}
@@ -86,10 +86,46 @@ As a conclusion, Prim's algorithm is guaranteed to output a spanning tree of the
 \end{proof}
 The second part of the proof is based on the cut property.
 \begin{theorem}
-\textbf{Cut Property}
+\textbf{(Cut Property)}
 Consider an edge $e$ of graph $G$. If $\exists$ cut $(A,B)$ such that $e$ is the cheapest crossing edge of the cut, then $e$ belongs to the\footnote{We use ``the'' rather than ``a'' because the MST is unique if edge costs are distinct.} MST of $G$.
 \end{theorem}
-According to the cut property, each edge selected in Prim's algorithm is part of the MST. Since we obtain a spanning tree in the end, it must be the MST. 
+\begin{proof}
+The cut proof can be proved by exchange argument.
+
+Suppose there is an edge $e$ that is the cheapest crossing edge of a cut $(A,B)$, yet $e$ is not in the MST $T^*$. As shown in Figure \ref{proofcutproperty}, in which all blue edges form the minimum spanning tree $T^*$, and the minimum crossing edge $e$ of $(A,B)$ is not contained in $T^*$.
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\tikzstyle{nodestyle} = [circle, draw=blue, fill=blue!20!]
+\tikzstyle{usualedge} = [blue, very thick]
+\tikzstyle{emphedge} = [red, very thick]
+\tikzstyle{label} = [midway, above]
+\node (A) at (-2,0.5) {A};
+\node (B) at (2,0.5) {B};
+\node[nodestyle](1) at (-2,0){1};
+\node[nodestyle](2) at (-2,-1){2};
+\node[nodestyle](3) at (-2,-2){3};
+\node[nodestyle](4) at (2,0){4};
+\node[nodestyle](5) at (2,-1){5};
+\node[nodestyle](6) at (2,-2){6};
+\draw[usualedge] (1) -- (2);
+\draw[usualedge] (2) -- (3);
+\draw[usualedge] (1) -- (4) node[label] {f};
+\draw[emphedge] (2) -- (5) node[label] {e};
+\draw[usualedge] (3) -- (6) node[label] {e'};
+\draw[usualedge] (5) -- (6);
+\draw (2) ellipse (1cm and 2cm);
+\draw (5) ellipse (1cm and 2cm);
+\end{tikzpicture}
+\caption{Proof of cut property}\label{proofcutproperty}
+\end{figure}
+
+We cannot exchange $e$ with a random crossing edge of the cut $(A,B)$. In this example, if we exchange $e$ with $f$, we no longer have a spanning tree. Rather, if $e$ is exchanged with $e'$, we obtain a spanning tree with smaller cost than $T^*$. Our task is to prove that such an edge $e'$ always exists. 
+
+Since $T^*$ is a spanning tree, $T^*\cup\{e\}$ must contains a cycle that includes $e$. According to Lemma \ref{doublecrossinglemma}, there must exist another edge $e'$ that crosses the cut $(A,B)$. According to the assumption, $e'$ must be more expensive than $e$. By substituting $e'$ with $e$ in $T^*$, we obtain a spanning tree $(T^*-\{e'\})\cup\{e\}$ with smaller cost than $T^*$, which contradicts with our assumption that $T^*$ is the MST.
+\end{proof}
+
+According to the cut property, each edge selected in Prim's algorithm is guaranteed to be part of the MST. Since we obtain a spanning tree in the end, it must be the MST. 
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
