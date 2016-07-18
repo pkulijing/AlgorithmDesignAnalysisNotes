@@ -26,9 +26,70 @@ Two simple cases of the problem are when the jobs have the same lengths / weight
 \item $w_j-l_j$
 \item $w_j/l_j$
 \end{itemize}
-A simple 2-job case with $l_1=5,\allowbreak w_1=3$ and $l_2=2,\allowbreak w_2=1$ rules the first option out. We will try to prove the correctness of the second option, which is absolutely not trivial.
+A simple 2-job case with $l_1=5,\allowbreak w_1=3$ and $l_2=2,\allowbreak w_2=1$ rules the first option out. We will try to prove the correctness of the second option, whose correctness is absolutely not trivial.
+\begin{proof}
+First we assume that all jobs have distinct scores, i.e. $w_i/l_i\neq w_j/l_j$ for $i\neq j$. This case can be addressed via contradiction.
 
+The $n$ jobs can be renamed so that $\frac{w_1}{l_1}>\frac{w_2}{l_2}>\dots>\frac{w_n}{l_n}$. According to the rule above, the optimal order should be $1,2,\dots,n$. Suppose that there exists an order superior to this one. In this order, there must exist at least one pair of consecutive jobs $i,j$ such that $i>j$ but $i$ is behind $j$. If we exchange $i,j$, the completion time of $i$ will decrease by $l_j$, whilst that of $j$ will increase by $l_i$. In total, the weighted sum of completion times decreases by
+$$w_il_j-w_jl_i.$$
+Since $i>j$, we must have $\frac{w_i}{l_i}>\frac{w_j}{l_j}$, thus $w_il_j>w_jl_i$. In conclusion, we have obtained a better order than the one supposed to be the optimal, which negates the initial assumption.
 
+With similar argument, the correctness of the algorithm can be verified for the general case with possible ties in score. In an arbitrary order of the jobs, a consecutive pair $(i,j)$ with $i>j$ and $i$ behind $j$ can be called an inversion\footnote{The definition of inversion here is different from that in Algorithm \ref{inversioncounting}.} The number of inversions is at most $\frac{n(n-1)}{2}$, and the only order without any inversion is $1,2,\dots,n$. Since we have $w_il_j\geq w_jl_i$ for $i>j$, exchanging an inversion is guaranteed not to increase the weighted sum of completion times. Each exchange decreases the number of inversions strictly by one. Thus after at most $\frac{n(n-1)}{2}$ exchanges, we must arrive at the order $1,2,\dots,n$ with no increase of the weighted sum. Therefore $1,2,\dots,n$ is at least as good as any other order in terms of weighted sum of completion times, making it a guaranteed optimal solution to the scheduling problem.
+\end{proof}
+\section{Minimum Spanning Tree}
+MST is a problem to which there exist a bunch of correct and fast greedy solutions. We will discuss two of them: Prim's algorithm and Kruskal's algorithm.
+\begin{description}
+\item[Input]An undirected graph $G(V,E)$ with a possibly negative cost $c_e$ for each $e\in E$. 
+\item[Output]A minimum cost tree $T\subseteq E$ that spans all vertices, i.e. connected subgraph $(V,T)$ that contains no cycles with minimum sum of edge costs.
+\end{description}
+In order to facilitate the discussion, we assume that graph $G$ is connected, and that edge costs are distinct, although Prim and Kruskal remain correct for ties in edge costs.
+\subsection{Prim's Algorithm}
+Prim's MST algorithm is shown in Algorithm \ref{primmst}. 
+\begin{algorithm}[ht]
+\caption{Prim's MST Algorithm}\label{primmst}
+\begin{algorithmic}[1]
+\Input{Undirected graph $G(V,E)$ with distinct cost $c_e$ for all $e\in E$.}
+\Output{MST of $G$}
+\State{Initialize $X=\{s\}$, $s\in V$ chosen arbitrarily}
+\State{Initialize $T=\emptyset$}
+\While{$X\neq V$}
+\State{Let $e=(u,v)$ be the cheapest edge of $G$ with $u\in X, v\notin X$}
+\State{Add $e$ to $T$}
+\State{Add $v$ to $X$}
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+We will prove its correctness in two steps. First, we verify that it does compute a spanning tree $T^*$. Then we prove that $T^*$ is an MST. 
+\begin{lemma}\textbf{(Empty Cut Lemma)}\label{emptycutlemma}
+A graph is not connect if and only if $\exists$ cut $(A,B)$ with no crossing edges.
+\end{lemma}
+\begin{proof}
+$(\Leftarrow)$The proof is trivial. Just take vertex $u\in A$ and $v\in B$. There cannot exist any edges between $u,v$, thus the graph is not connected.
+
+$(\Rightarrow)$Suppose there exists no edge between $u,v$. Take $A=\{$All vertices reachable from $u\}$, i.e. the connected component of $u$, $B=\{$All other vertices$\}$, i.e. other connected components. Then there exists no crossing edges of the cut $(A,B)$.
+\end{proof}
+\begin{lemma}
+\textbf{(Double Crossing Lemma)}
+Suppose the cycle $C\subseteq E$ has an edge crossing the cut $(A,B)$, then there must exist some other edge $e\in C$ that crosses the same cut.
+\end{lemma}
+\begin{corollary}
+\textbf{(Lonely Cut Corollary)}\label{lonelycutcorollary}
+If $e$ is the only edge crossing a cut $(A,B)$, then it is not contained in any cycle.
+\end{corollary}
+With the lemmas and the corollaries above, we can prove that Prim's algorithm outputs a spanning tree.
+\begin{proof}
+It can be proved by induction that Prim's algorithm maintains the invariant that $T$ spans $X$. The proof of connectivity is trivial. No cycle can be created in $T$ because each time an edge $e$ is added into $T$, it becomes the only crossing edge of the cut $(X,\{v\})$ of $T$, and therefore cannot be contained in a cycle according to Corollary \ref{lonelycutcorollary}. 
+
+The algorithm cannot get stuck when $X\neq V$, because otherwise the cut $(X,V-X)$ must be empty, and according to Lemma \ref{emptycutlemma}, the graph would be disconnected. 
+
+As a conclusion, Prim's algorithm is guaranteed to output a spanning tree of the original graph.
+\end{proof}
+The second part of the proof is based on the cut property.
+\begin{theorem}
+\textbf{Cut Property}
+Consider an edge $e$ of graph $G$. If $\exists$ cut $(A,B)$ such that $e$ is the cheapest crossing edge of the cut, then $e$ belongs to the\footnote{We use ``the'' rather than ``a'' because the MST is unique if edge costs are distinct.} MST of $G$.
+\end{theorem}
+According to the cut property, each edge selected in Prim's algorithm is part of the MST. Since we obtain a spanning tree in the end, it must be the MST. 
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
