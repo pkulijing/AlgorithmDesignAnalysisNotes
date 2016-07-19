@@ -126,6 +126,56 @@ Since $T^*$ is a spanning tree, $T^*\cup\{e\}$ must contains a cycle that includ
 \end{proof}
 
 According to the cut property, each edge selected in Prim's algorithm is guaranteed to be part of the MST. Since we obtain a spanning tree in the end, it must be the MST. 
+
+A brute-force implementation of Prim's algorithm has $O(nm)$ running time. In each iteration, all edges going out of $X$ needs to be scanned and the cheapest among them is chosen. The scanning process is $O(m)$, and there are totally $n$ iterations, thus the overall running time is $O(nm)$. This may not seem fast, but considering the fact than there exist $2^m$ possible sub-graphs among which the MST has to be selected, it already provides plenty of performance amelioration.
+
+Using heap can make Prim's algorithm run even faster. A straightforward idea is to use the heap to store crossing edges of the cut $(X,V-X)$, as shown in Algorithm \ref{primmstheap1}.
+\begin{algorithm}[ht]
+\caption{Prim's MST Algorithm, Heap Implementation 1}\label{primmstheap1}
+\begin{algorithmic}[1]
+\Input{Undirected graph $G(V,E)$ with distinct cost $c_e$ for all $e\in E$.}
+\Output{MST of $G$}
+\State{Initialize an empty heap $H$ and an empty set of nodes $X$.}
+\State{Randomly select a node $s$ and add it to $X$.}
+\State{Insert all edges $(s,v)$ into the heap.}
+\While{$X\neq V$}
+\State{Add edge $e=H.extractMin()$ to $T$.}
+\State{Add the node $n$ of $e$ not in $X$ to X.}
+\For{each edge $(n,v)\in E$}
+\If{$v\in V-X$}
+\State{Insert $(n,v)$ into $H$.}
+\ElsIf{$(n,v)\in H$}
+\State{Delete $(n,v)$ from $H$.}
+\EndIf
+\EndFor
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+Each edge can be inserted into and deleted from the heap at most once respectively, thus the overall running time is $O(m\log m)$. 
+
+ The heap can also be used to store vertices in $V-X$, with the key of node $v$ being the cost of the cheapest edge $(u,v)$ with $u\in X$, or $\infty$ if such edge does not exist. The implementation is shown in Algorithm \ref{primmstheap2}.
+\begin{algorithm}[ht]
+\caption{Prim's MST Algorithm, Heap Implementation 2}\label{primmstheap2}
+\begin{algorithmic}[1]
+\Input{Undirected graph $G(V,E)$ with distinct cost $c_e$ for all $e\in E$}
+\Output{MST of $G$}
+\State{Initialize heap $H$ with all nodes in $V$. Obviously all nodes have key $\infty$.}
+\State{Initialize empty set of nodes $X$.}
+\While{$H$ is not empty}
+\State{Add node $v=H.extractMin()$ to $X$.}
+\State{Add the edge associated with $v$ to $T$ if it exists.}
+\For{each edge $(v,w)\in E$}
+\If{$w\in V-X$ \textbf{and} $cost(v,w)<key[w]$}
+\State{Change $key[w]$ to $cost(v,w)$.}
+\State{Change the edge associated with $w$ to $(v,w)$.}
+\State{Bubble up the changed node in $H$.}
+\EndIf
+\EndFor
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+In total the minimum of the heap is extracted $n$ times. Each edge is possible to trigger a bubble up. Since the graph is connected, we have $m\geq n-1$. Therefore, the overall running time of Algorithm \ref{primmstheap2} is $O(m\log n)$.
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
