@@ -37,13 +37,13 @@ Since $i>j$, we must have $\frac{w_i}{l_i}>\frac{w_j}{l_j}$, thus $w_il_j>w_jl_i
 With similar argument, the correctness of the algorithm can be verified for the general case with possible ties in score. In an arbitrary order of the jobs, a consecutive pair $(i,j)$ with $i>j$ and $i$ behind $j$ can be called an inversion\footnote{The definition of inversion here is different from that in Algorithm \ref{inversioncounting}.} The number of inversions is at most $\frac{n(n-1)}{2}$, and the only order without any inversion is $1,2,\dots,n$. Since we have $w_il_j\geq w_jl_i$ for $i>j$, exchanging an inversion is guaranteed not to increase the weighted sum of completion times. Each exchange decreases the number of inversions strictly by one. Thus after at most $\frac{n(n-1)}{2}$ exchanges, we must arrive at the order $1,2,\dots,n$ with no increase of the weighted sum. Therefore $1,2,\dots,n$ is at least as good as any other order in terms of weighted sum of completion times, making it a guaranteed optimal solution to the scheduling problem.
 \end{proof}
 \section{Minimum Spanning Tree}
-MST is a problem to which there exist a bunch of correct and fast greedy solutions. We will discuss two of them: Prim's algorithm and Kruskal's algorithm.
+Minimum spanning tree is a problem to which there exist a bunch of correct and fast greedy solutions. We will discuss two of them: Prim's algorithm and Kruskal's algorithm.
 \begin{description}
 \item[Input]An undirected graph $G(V,E)$ with a possibly negative cost $c_e$ for each $e\in E$. 
 \item[Output]A minimum cost tree $T\subseteq E$ that spans all vertices, i.e. connected subgraph $(V,T)$ that contains no cycles with minimum sum of edge costs.
 \end{description}
 In order to facilitate the discussion, we assume that graph $G$ is connected, and that edge costs are distinct, although Prim and Kruskal remain correct for ties in edge costs.
-\subsection{Prim's Algorithm}
+\subsection{Prims' Algorithm}
 Prim's MST algorithm is shown in Algorithm \ref{primmst}. 
 \begin{algorithm}[ht]
 \caption{Prim's MST Algorithm}\label{primmst}
@@ -59,14 +59,15 @@ Prim's MST algorithm is shown in Algorithm \ref{primmst}.
 \EndWhile
 \end{algorithmic}
 \end{algorithm}
+\subsubsection{Correctness}
 We will prove its correctness in two steps. First, we verify that it does compute a spanning tree $T^*$. Then we prove that $T^*$ is an MST. 
 \begin{lemma}\textbf{(Empty Cut Lemma)}\label{emptycutlemma}
-A graph is not connect if and only if $\exists$ cut $(A,B)$ with no crossing edges.
+A graph is not connected if and only if $\exists$ cut $(A,B)$ with no crossing edges.
 \end{lemma}
 \begin{proof}
 $(\Leftarrow)$The proof is trivial. Just take vertex $u\in A$ and $v\in B$. There cannot exist any edges between $u,v$, thus the graph is not connected.
 
-$(\Rightarrow)$Suppose there exists no edge between $u,v$. Take $A=\{$All vertices reachable from $u\}$, i.e. the connected component of $u$, $B=\{$All other vertices$\}$, i.e. other connected components. Then there exists no crossing edges of the cut $(A,B)$.
+$(\Rightarrow)$Suppose there exists no path between $u,v$. Take $A=\{$All vertices reachable from $u\}$, i.e. the connected component of $u$, $B=\{$All other vertices$\}$, i.e. other connected components. Then there exists no crossing edges of the cut $(A,B)$.
 \end{proof}
 \begin{lemma}\label{doublecrossinglemma}
 \textbf{(Double Crossing Lemma)}
@@ -85,12 +86,12 @@ The algorithm cannot get stuck when $X\neq V$, because otherwise the cut $(X,V-X
 As a conclusion, Prim's algorithm is guaranteed to output a spanning tree of the original graph.
 \end{proof}
 The second part of the proof is based on the cut property.
-\begin{theorem}
+\begin{theorem}\label{cutproperty}
 \textbf{(Cut Property)}
 Consider an edge $e$ of graph $G$. If $\exists$ cut $(A,B)$ such that $e$ is the cheapest crossing edge of the cut, then $e$ belongs to the\footnote{We use ``the'' rather than ``a'' because the MST is unique if edge costs are distinct.} MST of $G$.
 \end{theorem}
 \begin{proof}
-The cut proof can be proved by exchange argument.
+The cut property can be proved by exchange argument.
 
 Suppose there is an edge $e$ that is the cheapest crossing edge of a cut $(A,B)$, yet $e$ is not in the MST $T^*$. As shown in Figure \ref{proofcutproperty}, in which all blue edges form the minimum spanning tree $T^*$, and the minimum crossing edge $e$ of $(A,B)$ is not contained in $T^*$.
 \begin{figure}[ht]
@@ -126,7 +127,7 @@ Since $T^*$ is a spanning tree, $T^*\cup\{e\}$ must contains a cycle that includ
 \end{proof}
 
 According to the cut property, each edge selected in Prim's algorithm is guaranteed to be part of the MST. Since we obtain a spanning tree in the end, it must be the MST. 
-
+\subsubsection{Implementation}
 A brute-force implementation of Prim's algorithm has $O(nm)$ running time. In each iteration, all edges going out of $X$ needs to be scanned and the cheapest among them is chosen. The scanning process is $O(m)$, and there are totally $n$ iterations, thus the overall running time is $O(nm)$. This may not seem fast, but considering the fact than there exist $2^m$ possible sub-graphs among which the MST has to be selected, it already provides plenty of performance amelioration.
 
 Using heap can make Prim's algorithm run even faster. A straightforward idea is to use the heap to store crossing edges of the cut $(X,V-X)$, as shown in Algorithm \ref{primmstheap1}.
@@ -153,7 +154,7 @@ Using heap can make Prim's algorithm run even faster. A straightforward idea is 
 \end{algorithm}
 Each edge can be inserted into and deleted from the heap at most once respectively, thus the overall running time is $O(m\log m)$. 
 
- The heap can also be used to store vertices in $V-X$, with the key of node $v$ being the cost of the cheapest edge $(u,v)$ with $u\in X$, or $\infty$ if such edge does not exist. The implementation is shown in Algorithm \ref{primmstheap2}.
+The heap can also be used to store vertices in $V-X$, with the key of node $v$ being the cost of the cheapest edge $(u,v)$ with $u\in X$, or $\infty$ if such edge does not exist. The implementation is shown in Algorithm \ref{primmstheap2}.
 \begin{algorithm}[ht]
 \caption{Prim's MST Algorithm, Heap Implementation 2}\label{primmstheap2}
 \begin{algorithmic}[1]
@@ -176,6 +177,95 @@ Each edge can be inserted into and deleted from the heap at most once respective
 \end{algorithm}
 
 In total the minimum of the heap is extracted $n$ times. Each edge is possible to trigger a bubble up. Since the graph is connected, we have $m\geq n-1$. Therefore, the overall running time of Algorithm \ref{primmstheap2} is $O(m\log n)$.
+\subsection{Kruskal's Algorithm}
+Kruskal's algorithm is another efficient greedy algorithm that solves the MST problem.
+\begin{algorithm}[ht]
+\caption{Kruskal's MST Algorithm}\label{kruskalmst}
+\begin{algorithmic}[1]
+\Input{Undirected connected graph $G(V,E)$ with distinct cost $c_e$ for all $e\in E$}
+\Output{$T$: MST of $G$}
+\State{Sort all edges in order of increasing cost.}
+\State{Rename the edges so that $c_1<c_2<\dots<c_m$.}
+\State{Initialize set of edges $T=\emptyset$.}
+\For{$i=1$ \textbf{to} $m$}\Comment{Can terminate when $T$ already contains all nodes.}
+\If{$T\cup\{i\}$ has no cycle}
+\State{Add $i$ to $T$}
+\EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+\subsubsection{Correctness}
+We will prove the correctness of Kruskal's algorithm in a similar way to that of Prim's algorithm, i.e. first we verify that it outputs a spanning tree, then we demonstrate that this tree is the MST.
+
+Let $T^*$ be the output of Kruskal's algorithm on a graph $G$. It can be proved that $T^*$ contains all nodes of $G$. For a random node $n$, consider the cut $(\{n\},V-\{n\})$ of $G$. Since $G$ is connected, there must exist at least one edge crossing this cut. Let $e$ represent the cheapest among them. When Kruskal's algorithm examines $e$, it is guaranteed to include it into $T$, because $e$ is at the moment the only crossing edge of the cut inside $T$ and thus cannot induce any cycle according to the lonely cut corollary (\ref{lonelycutcorollary}). Therefore $n$ is contained in $T^*$. 
+
+It is enforced by the algorithm that $T^*$ contains no cycle. In order to prove that $T^*$ is a spanning tree of $G$, we need to verify that $T^*$ is connected, which according to empty cut lemma (\ref{emptycutlemma}) is equivalent to the fact that it crosses every cut of $G$. For any cut $(A,B)$ of $G$, the same conclusion as that proved for $(\{n\},V-\{n\})$ above still holds, i.e. $T^*$ must contain the cheapest crossing edge of this cut. Therefore $T^*$ must cross any cut, and we have succeeded in proving that Kruskal's algorithm outputs a spanning tree of $G$.   
+
+In order to prove that $T^*$ is the MST of $G$, we just have to prove that each edge of $T^*$ satisfies the cut property (\ref{cutproperty}). 
+
+Consider an iteration in Kruskal's algorithm that adds edge $(u,v)$ into $T$, as illustrated in Figure \ref{proofkruskal}. 
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\tikzstyle{majornode} = [circle, draw=blue, fill=blue!20!]
+\tikzstyle{minornode} = [circle, draw, minimum size=0.3cm]
+\tikzstyle{minoredge} = [thick, black]
+\tikzstyle{majoredge} = [very thick, red]
+\node[majornode] (u) at (-2, -1) {u};
+\node[majornode] (v) at (1, -3) {v};
+\node[minornode] (u1) at (-2.5,-1.5){};
+\node[minornode] (u2) at (-3,-2){};
+\node[minornode] (u3) at (-2.2,-2.5){};
+\node[minornode] (u4) at (-2,-1.8){};
+\node[minornode] (v1) at (2.3,-1.5){};
+\node[minornode] (v2) at (2.4,-2.2){};
+\node[minornode] (v3) at (0.8,-2){};
+\node[minornode] (v4) at (1.2,-1.4){};
+\node[minornode] (n1) at (0.5, -0.8) {};
+\node[minornode] (n2) at (0, -1.8) {};
+\node[minornode] (n3) at (-0.2, -0.5) {};
+\node[minornode] (n4) at (2, -0.3) {};
+\draw[minoredge] (n1) -- (n2);
+\draw[minoredge] (u) -- (u1);
+\draw[minoredge] (u1) -- (u2);
+\draw[minoredge] (u1) -- (u3);
+\draw[minoredge] (u3) -- (u4);
+\draw[minoredge] (v) -- (v1);
+\draw[minoredge] (v1) -- (v2);
+\draw[minoredge] (v1) -- (v3);
+\draw[minoredge] (v3) -- (v4);
+\draw[majoredge] (u) -- (v);
+\draw[blue] (u1) ellipse (1cm and 1.5cm);
+\draw[blue] (v4) ellipse (2.3cm and 2cm);
+\node[blue] (A) at (-2.5, -0.5) {A};
+\node[blue] (B) at (1, 0) {B};
+\end{tikzpicture}
+\caption{Proof of Kruskal's Algorithm}\label{proofkruskal}
+\end{figure}
+
+Since $(u,v)$ does not induce any cycle, there cannot exist any path from $u$ to $v$ in $T$. Take $A=$\{connected component of $u$ in $T$\}, $B=$\{All other nodes of $G$\}, then $(u,v)$ is the first crossing edge of this cut examined by Kruskal's algorithm (if there existed any other, the associated node in $B$ would be connected to $u$, and should have been contained in $A$), thus is also the cheapest crossing edge of the cut, which means that it satisfies the cut property. Hence, all edges in $T^*$ satisfy the cut property. $T^*$ is 
+therefore the MST of $G$.
+\subsubsection{Implementation}
+Sorting the edges takes $O(m\log m)$ time. Assume that there exists no parallel edge, then $m=O(n^2)$, so the running time of the sorting is $O(m\log n)$. Totally there are $O(m)$ iterations. In each iteration, the existence of cycle in the intermediate sub-graph $T$, which contains at most $n-1$ edges, can be checked via DFS or BFS in $O(n)$ time\footnote{A JAVA implementation using DFS can be found at \href{http://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/Cycle.java.html}{\path{http://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/Cycle.java.html}}}. The total running time is therefore $O(m\log n) + O(mn)=O(mn)$. 
+
+If we can find a data structure that allows cycle check in constant time, sorting the edges will be come the bottleneck and the running time of Kruskal's algorithm will become $O(m\log n)$. Union-Find is a data structure that makes this feasible.
+
+Union-Find data structure maintains the partition of a set of objects. It supports two essential operations:
+\begin{description}
+\item[$find(X)$]Returns the name of the group to which $X$ belongs.
+\item[$union(C_i, C_j)$]Merge groups $C_i,C_j$ into one group.
+\end{description} 
+In the problem of cycle check, the objects are the nodes, and they are partitioned into different connected components of $(V,T)$. When a new edge $(u,v)$ is added to $T$, if $u,v$ are inside the same group, i.e. $find(u)=find(v)$, then $(u,v)$ introduces a cycle. 
+
+In order that the cycle check operation is $O(1)$, the union-find here needs to carry out $find(u)$ in constant time. This can be achieved by maintaining a linked structure per connected component of $(V,T)$. Each component has an arbitrary leader node to which all nodes in the same connected component point. The leader represents the name of the connected component. $find(u)$ returns the leader in $O(1)$ time, thus cycle check can be finished in $O(1)$ time. 
+
+When a new edge $(u,v)$ is added to $T$, connected components of $u,v$ should merge into one. When two components merge, we have the smaller one inherit the leader of the larger one. At most $O(n)$ pointer updates are required for a merge. Nonetheless, the leader of each node can be updated at most $O(\log n)$ times, because each merge in which the leader gets updated at least doubles the size of the component to which the node belongs. 
+
+It takes $O(m\log n)$ time to sort the edges, $O(m)$ time to check cycles, and $O(n\log n)$ to update leaders during merges. In total, Kruskal's algorithm has $O(m\log n)$ running time, which matches with Prim's algorithm.
+\subsection{State-of-the-Art and Open Questions}
+Prim's and Kruskal's algorithms find the MST in $O(m\log n)$ time. But can we do better? The answer is yes. An $O(m)$ randomized algorithm and an $O(m\alpha(n))$ deterministic algorithm have been found. The optimal deterministic algorithm has also been found, yet its running time is still unclear. So it remains an open question whether or not there exists an $O(m)$ deterministic solution to the MST problem.
+\subsection{Clustering}
+\section{Huffman's Code}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
