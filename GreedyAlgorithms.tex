@@ -265,7 +265,105 @@ It takes $O(m\log n)$ time to sort the edges, $O(m)$ time to check cycles, and $
 \subsection{State-of-the-Art and Open Questions}
 Prim's and Kruskal's algorithms find the MST in $O(m\log n)$ time. But can we do better? The answer is yes. An $O(m)$ randomized algorithm and an $O(m\alpha(n))$ deterministic algorithm have been found. The optimal deterministic algorithm has also been found, yet its running time is still unclear. So it remains an open question whether or not there exists an $O(m)$ deterministic solution to the MST problem.
 \subsection{Clustering}
+Clustering is also called unsupervised learning, which is an important problem in machine learning. The target is to classify $n$ given ``points'' into $k$ coherent groups. These points are not necessarily geometrical points. They can be web pages, images, genome fragments, etc, but it is required that a similarity measure, i.e. a distance function $d(p,q)$ should be defined for the points. $d(p,q)$ should be symmetric. 
+\begin{definition}
+The spacing of a $k$-clustering is defined as $$\min\limits_{p\in C_i,q\in C_j,i\neq j}d(p,q),$$ in which $C_i,C_j$ are two different clusters.
+\end{definition}
+\begin{description}
+\item[Input]$n$ points with distance function $d(p,q)$.
+\item[Output]$k$-clustering with maximum spacing.
+\end{description}
+A greed algorithm is provided in Algorithm \ref{greedyclustering}. It is quite analogous to Kruskal's MST algorithm: the points are the vertices, the distances are the edge costs, and each pair of point is an edge. This approach to solving the clustering problem is called single link clustering.
+\begin{algorithm}[ht]
+\caption{Greedy Clustering Algorithm}\label{greedyclustering}
+\begin{algorithmic}[1]
+\State{Initialize each point as a cluster.}
+\Repeat
+\State{Choose $p\in C_i,q\in C_j,i\neq j$ such that $d(p,q)$ is minimized.}
+\State{Merge $C_i,C_j$ into one cluster.}
+\Until{There are $k$ clusters left.}
+\end{algorithmic}
+\end{algorithm}
+
+To prove the correctness of Algorithm \ref{greedyclustering}, we again turn to exchange argument.
+\begin{proof}
+Let $C_1,C_2,\dots,C_k$ be the $k$-clustering found by the greedy algorithm with spacing $S$, and $\hat{C_1},\hat{C_2},\dots,\hat{C_k}$ be another arbitrary $k$-clustering with spacing $\hat{S}$. We need to verify that $\hat{S}\leq S$.
+
+If $\hat{C_i}$'s are just a renaming of $C_i$'s, then they obviously have the same spacing. Otherwise, there must exist at least one pair of points $p,q$ such that $p,q\in C_i$ but $p\in \hat{C_i}, q\in\hat{C_j}, i\neq j.$
+
+If $p,q$ were chosen in some iteration of Algorithm \ref{greedyclustering}, i.e. they were ``directly merged'', then we must have $d(p,q)\leq S$. Since $\hat{S}\leq d(p,q)$, we've already proved $\hat{S}\leq S$.
+
+If $p,q$ were not chosen in any iteration of the greedy algorithm, i.e. they were ``indirectly merged'', then let's consider the path from $p$ to $q$ inside $C_i$ formed by all direct greedy merges. Because $p\in \hat{C_i}, q\in\hat{C_j}, i\neq j,$ we are certainly able to find two consecutive points $p',q'$ on this path such that $p'\in C_i, q'\in C_j$. Then the problem is reduced to the case above, and we have $\hat{S}\leq d(p',q')\leq S$.   
+\end{proof}
+\section{Union Find}
 \section{Huffman's Code}
+\subsection{Problem Definition}
+Find the best prefix-free encoding for a given set of character frequencies. 
+$L(T)=\sum\limits_{i\in\Sigma}p_id_i$
+\begin{description}
+\item[Input]Probability $p_i$ for each character $i\in\Sigma$.
+\item[Output]A binary tree $T$ that minimizes $L(T).$
+\end{description}
+
+\subsection{Greedy Algorithm}
+\begin{algorithm}[ht]
+\caption{Huffman's Algorithm}\label{huffman}
+\begin{algorithmic}[1]
+\If{$\lvert\Sigma\rvert=2$} 
+\State{Return a tree with the two characters in $\Sigma$ as children.}
+\EndIf
+\State{Let $a,b$ be the two characters in $\Sigma$ that have the smallest frequencies.}
+\State{Let $\Sigma'=\Sigma-\{a,b\}+\{ab\}$, and $p_{ab}=p_a+p_b$.}
+\State{Recursively compute $T'$ for $\Sigma'$.}
+\State{Expand $T'$ to a tree $T$ by splitting leaf $ab$ into two leaves $a,b$.}
+\end{algorithmic}
+\end{algorithm}
+As an example, consider the following alphabet.
+\begin{center}
+\begin{tabular}{ccccccc}
+character & A & B & C & D & E & F\\
+weight    & 3 & 2 & 6 & 8 & 2 & 6
+\end{tabular}
+\end{center}
+Running Huffman's algorithm will give us the result 
+\begin{center}
+\begin{tikzpicture}[
+level 1/.style={sibling distance=4cm, level distance=1.5cm},
+level 2/.style={sibling distance=2cm, level distance=1.5cm},
+level 3/.style={sibling distance=2cm, level distance=1.5cm},
+level 4/.style={sibling distance=2cm, level distance=1.5cm},
+]
+\tikzstyle{node} = [circle, draw, minimum size=0.5cm]
+\tikzstyle{leafnode} = [circle, draw, minimum size=0.5cm, red]
+\node[node] (1) at (0,0) {27}
+	child { node[node] {15}
+		child { node[node] {7}
+			child { node[leafnode] {A(3)} edge from parent node[left]{0}}
+			child { node[node] {4}
+				child { node[leafnode] {B(2)} edge from parent node[left]{0}}
+				child { node[leafnode] {E(2)} edge from parent node[right]{1}}
+				edge from parent node[right]{1}
+				}
+			edge from parent node[left]{0}}
+		child { node[leafnode] {D(8)} edge from parent node[right]{1}}
+		edge from parent node[left]{0}}
+	child { node[node] {12}
+		child { node[leafnode] {C(6)} edge from parent node[left]{0}}
+		child { node[leafnode] {F(6)} edge from parent node[right]{1}}
+		edge from parent node[right]{1}};
+\end{tikzpicture}
+\end{center}
+Finally we have the Huffman code:
+\begin{center}
+\begin{tabular}{ccccccc}
+character & A & B & C & D & E & F\\
+code    & 000 & 0010 & 10 & 01 & 0011 & 11
+\end{tabular}
+\end{center}
+\subsection{Proof of Correctness}
+We will prove the correctness of Huffman's algorithm by induction on $n=\lvert\Sigma\rvert>2$.
+
+The base case is trivial: for an alphabet containing 2 characters, 1 bit is enough for the encoding. 
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
