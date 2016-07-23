@@ -248,7 +248,7 @@ therefore the MST of $G$.
 \subsubsection{Implementation}
 Sorting the edges takes $O(m\log m)$ time. Assume that there exists no parallel edge, then $m=O(n^2)$, so the running time of the sorting is $O(m\log n)$. Totally there are $O(m)$ iterations. In each iteration, the existence of cycle in the intermediate sub-graph $T$, which contains at most $n-1$ edges, can be checked via DFS or BFS in $O(n)$ time\footnote{A JAVA implementation using DFS can be found at \href{http://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/Cycle.java.html}{\path{http://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/Cycle.java.html}}}. The total running time is therefore $O(m\log n) + O(mn)=O(mn)$. 
 
-If we can find a data structure that allows cycle check in constant time, sorting the edges will be come the bottleneck and the running time of Kruskal's algorithm will become $O(m\log n)$. Union-Find is a data structure that makes this feasible.
+If we can find a data structure that allows cycle check in constant time, sorting the edges will become the bottleneck and the running time of Kruskal's algorithm will become $O(m\log n)$. Union-Find is a data structure that makes this feasible.
 
 Union-Find data structure maintains the partition of a set of objects. It supports two essential operations:
 \begin{description}
@@ -298,14 +298,22 @@ If $p,q$ were not chosen in any iteration of the greedy algorithm, i.e. they wer
 \section{Union Find}
 \section{Huffman's Code}
 \subsection{Problem Definition}
-Find the best prefix-free encoding for a given set of character frequencies. 
-$L(T)=\sum\limits_{i\in\Sigma}p_id_i$
+Text has to be encoded into binary codes in order to be processed by modern computers. An encoding method maps each character inside an alphabet $\Sigma$ into a binary string. If all characters are encoded with binary strings of the same length, then $n$ bits can represent at most $2^n$ characters. For example, ASCII uses 8 bits to represent 128 characters. 
+
+We can do better by using fewer bits to represent characters more frequently used, i.e. using variable-length codes. The codes have to be prefix-free in order to avoid ambiguity.
+
+A binary encoding can be represented by a binary tree. For each node, path to its left child is marked with 0 while path to its right child is marked with 1. Each node is labeled with a character, whose code is the 0/1 marks encountered when going from the root to this node. For a prefix-free encoding, only leaf nodes can be labeled.
+
+Our target is to find the best prefix-free encoding for a given set of character frequencies. The average encoding length $L(T)$ for an encoding (represented by the correspondent binary tree $T$) is defined as
+$$L(T)=\sum\limits_{i\in\Sigma}p_id_i,$$
+in which $p_i$ is the frequency of $i$, and $d_i$ is the length of $i$'s code, i.e. the depth of $i$ in the tree.
 \begin{description}
 \item[Input]Probability $p_i$ for each character $i\in\Sigma$.
-\item[Output]A binary tree $T$ that minimizes $L(T).$
+\item[Output]An encoding tree $T$ that minimizes $L(T).$
 \end{description}
 
 \subsection{Greedy Algorithm}
+Huffman's algorithm is a greedy algorithm that can help us find the optimal encoding.
 \begin{algorithm}[ht]
 \caption{Huffman's Algorithm}\label{huffman}
 \begin{algorithmic}[1]
@@ -318,6 +326,7 @@ $L(T)=\sum\limits_{i\in\Sigma}p_id_i$
 \State{Expand $T'$ to a tree $T$ by splitting leaf $ab$ into two leaves $a,b$.}
 \end{algorithmic}
 \end{algorithm}
+
 As an example, consider the following alphabet.
 \begin{center}
 \begin{tabular}{ccccccc}
@@ -363,7 +372,60 @@ code    & 000 & 0010 & 10 & 01 & 0011 & 11
 \subsection{Proof of Correctness}
 We will prove the correctness of Huffman's algorithm by induction on $n=\lvert\Sigma\rvert>2$.
 
-The base case is trivial: for an alphabet containing 2 characters, 1 bit is enough for the encoding. 
+The base case is trivial: for an alphabet containing 2 characters, 1 bit is enough for the encoding. Suppose the algorithm is correct for any $k\leq n$, in which $n\geq 2$. Let's denote the alphabet for $n$ as $\Sigma'$, and the tree obtained by the algorithm to encode $\Sigma'$ as $T'_0$, which contains a leaf $ab$ that will be split into siblings $a,b$ to obtain tree $T_0$ that will be used to encode $\Sigma$. 
+
+For any tree $T'$ used to encode $\Sigma'$, and tree $T$ obtained by splitting $ab$ of $T'$ into $a$ and $b$, since $p_{ab}=p_a+p_b$ and $d_{a}=d_{b}=d'_{ab}+1$, we have 
+\begin{equation}\label{proofhuffman}
+L(T)-L(T')=p_ad_a+p_bd_b-p_{ab}d'_{ab}=p_a+p_b.
+\end{equation}
+According to our assumption, $T'_0$ produces the minimum average encoding length $L(T')$ among all possible $T'$. \eqref{proofhuffman} verifies that $L(T)$ has a constant difference from $L(T')$, thus $T_0$ is the optimal choice among all $T$, i.e. all encoding trees of $\Sigma$ that have $a$ and $b$ as siblings. Next we will prove by exchange argument that this optimum is guaranteed to be the overall optimum.
+
+Encoding trees of $\Sigma$ are guaranteed to have the following properties:
+\begin{itemize}
+\item Each node has either no child or two children. If a node has only one child, as shown in the following figure, node B can simply be removed.\\
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\tikzstyle{node}=[circle, draw]
+\node[node] (0) at (0,0) {A};
+\node[node,red] (1) at (-1,-1) {B};
+\node[node] (2) at (-2,-2) {C};
+\node[node] (3) at (4,-0.5) {A};
+\node[node] (4) at (3,-1.5) {C};
+\draw (0) -- (1);
+\draw (1) -- (2);
+\draw (3) -- (4);
+\draw[->] (0.5,-1) -- (2.5,-1);
+\end{tikzpicture} 
+\end{figure}
+\item Leaf nodes at the same  level can be interchanged arbitrarily without affecting the average encoding length. 
+\end{itemize}
+
+For an encoding tree that do not have $a$ and $b$ as siblings but having them at the same level, we can always find another tree with the same average encoding length having $a,b$ as siblings. Suppose that an encoding tree $T$ with $a,b$ at different levels has the minimum average encoding length. There is at least one of them not at the bottom level, which let's suppose is $a$. There is at least one node other than $b$ in the bottom level, which let's suppose is $x$. Up to now we have $p_a<p_x$ and $d_a<d_x$. By exchanging $a,x$, we obtain a new encoding tree $T_1$, and 
+$$L(T_1)-L(T)=p_ad_x+p_xd_a-(p_xd_x+p_ad_a)=-(p_a-p_x)(d_a-d_x)<0,$$
+which contradicts our assumption that $T$ is optimal. Hence the optimal tree must have $a,b$ together at the bottom level.
+
+A brute-force implementation of Huffman's algorithm takes $O(n^2)$ time: there are $n$ iterations, and in each iteration it takes $O(n)$ to search for $a,b$. By using a heap to store the frequencies, the running time can be reduced to $O(n\log n)$. By sorting the frequencies in advance, which takes $O(n\log n)$, the rest of the job can be finished in $O(n)$ time with the help of two queues, as shown in Algorithm \ref{huffmanfast}.
+\begin{algorithm}[ht]
+\caption{Huffman's Algorithm - Fast Implementation}\label{huffmanfast}
+\begin{algorithmic}[1]
+\Input{Probability $p_i$ for each character $i\in\Sigma$}.
+\Output{An encoding tree $T$ that minimizes $L(T).$}
+\State{Sort the characters according to $p_i$ and push them in a queue $Q_1$.}
+\State{Set up empty queue $Q_2$.}
+\While{$\lvert Q_1\rvert+\lvert Q_2\rvert>1$}
+\State{$a=selectMin(Q_1,Q_2)$}
+\State{$b=selectMin(Q_1,Q_2)$}
+\State{Push $ab$ with $p_{ab}=p_a+p_b$ to $Q_2$.}\Comment{$a,b$ are siblings and $ab$ is their parent.}
+\EndWhile
+\State{The only node left in $Q_2$ is the root of $T$.}
+\Function{$selectMin$}{$Q_1,Q_2$}
+\State{$a=Q_1.front(), b=Q_2.front()$}
+\State{Pop the smaller between $a,b$ from its queue and return it.}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
