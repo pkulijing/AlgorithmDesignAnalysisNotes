@@ -343,7 +343,130 @@ Let $t=-k/b$, then we have
 \dv{\ln\epsilon}{t}&=-\frac{b}{e^t-1}\left(t+(e^t-1)\ln(1-e^{-t})\right).\\
 \end{align*}
 When $t=\ln 2$, $\dv{\ln\epsilon}{t}=0$ and $\epsilon$ gets minimized. Thus we should use $k=(ln 2)b\approx 0.693b.$ With $b=8$, we should choose $k=5$ or 6, and $\epsilon$ will be approximately 2\%. 
+\section[Union Find]{Union Find\protect\footnote{This topic was originally covered as an optional topic in Part 2. I put it here because it's a pure data structure topic that fits this chapter better.}}\label{unionfind}
+Union find data structure maintains the partition of a set of objects. It supports two essential operations:
+\begin{description}
+\item[$find(x)$]Returns the name of the group to which $x$ belongs.
+\item[$union(C_i, C_j)$]Merge groups $C_i,C_j$ into one group.
+\end{description} 
+\subsection{Quick Find UF}
+\begin{multicols}{2}
+\begin{algorithmic}[1]
+\Function{find}{x}
+\State{return leader(x)}
+\EndFunction
+\end{algorithmic}
+\columnbreak
+\begin{algorithmic}[1]
+\Function{union}{x,y}
+\If{size(x) $>$ size(y)}
+\For{i in y's group}
+\State{leader(i) = x}
+\EndFor
+\State{size(x) += size(y)}
+\Else
+\For{i in x's group}
+\State{leader(i) = y}
+\EndFor
+\State{size(y) += size(x)}
+\EndIf
+\EndFunction
+\end{algorithmic}
+\end{multicols}
+In this implementation, a leader is chosen from each group arbitrarily. Each group is represented by its leader. Each object maintains a pointer to its leader. When two groups get merged, the leader of the larger group (i.e. the group that contains more objects) becomes the leader of the merged group. 
 
+$find()$ is easy for this implementation: just return its leader, which takes $O(1)$ time. However $union()$ takes $O(n)$ time, because all objects in the smaller group have to have the leader pointer updated. Nonetheless, if we consecutively merge groups so that in the end all objects are in the same group, the leader of each object is updated at most $\log n$ times, because each time an object has its leader updated, the size of the group to which it belongs at least doubles. Therefore in total there can be at most $O(n\log )$ leader updates.
+\subsection{Quick Union UF}
+\begin{multicols}{2}
+\begin{algorithmic}[1]
+\Function{find}{x}
+\While{x $\neq$ parent(x)}
+\State{x = parent(x)}
+\EndWhile
+\State{return x}
+\EndFunction
+\end{algorithmic}
+\columnbreak
+\begin{algorithmic}[1]
+\Function{union}{x,y}
+\State{lx = find(x), ly = find(y)}
+\If{size(lx) $>$ size(ly)}
+\State{parent(ly) = lx}
+\State{size(lx) += size(ly)}
+\Else
+\State{parent(lx) = ly}
+\State{size(ly) += size(lx)}
+\EndIf
+\EndFunction
+\end{algorithmic}
+\end{multicols}
+In this implementation\footnote{It is different from the lazy union implementation in the lectures. It is as efficient as union by rank, but much easier to verify.}, each object maintains a pointer to its parent instead of its leader. Only the leader has itself as parent. In this way each group form a tree, with the leader as root. $find()$ follows the parent pointer of objects until the leader is met. $union()$ changes the parent of the leader of the smaller group into the leader of the larger group. 
+
+It can be proved by induction that a group with $k$ objects forms a tree of height no more than $\log k$. 
+\begin{proof}
+The base case is trivial: each group has 1 object and height 0. Suppose $1\leq i\leq j$. When a group with $i$ objects is merged with a group with $j$ objects, the height of the new group is 
+$$h_{i+j}=h_i+1\leq \log i + 1 = \log(2i)\leq\log(i+j).$$
+\end{proof}
+Since the tree is at most of logarithmic height, the running time of $find()$ and $union()$ are both $O(\log n).$
+\subsection{Union by Rank}
+\begin{multicols}{2}
+\begin{algorithmic}[1]
+\Function{find}{x}
+\While{x $\neq$ parent(x)}
+\State{x = parent(x)}
+\EndWhile
+\State{return x}
+\EndFunction
+\end{algorithmic}
+\columnbreak
+\begin{algorithmic}[1]
+\Function{union}{x,y}
+\State{lx = find(x), ly = find(y)}
+\If{rank(lx) $>$ rank(ly)}
+\State{parent(ly) = lx}
+\ElsIf{rank(lx) $<$ rank(ly)}
+\State{parent(lx) = ly}
+\Else\Comment{equal}
+\State{parent(lx) = ly}
+\State{rank(ly) += 1}
+\EndIf
+\EndFunction
+\end{algorithmic}
+\end{multicols}
+$find()$ is the same as quick union. Each object maintains a rank field, which is initialized to 0 for all objects and can only increase in a merge of two trees whose roots have the same rank. In $union()$, rank instead of size is used to determine which root will serve as the root of the merged tree. It can be verified that union by rank also achieves $O(\log n)$ running time. 
+
+It follows immediately from the implementation of $union()$ that
+\begin{enumerate}
+\item For any object x, rank(x) can only increase over time.
+\item Only ranks of roots can go up.
+\item Along a path to the root, ranks strictly increase.
+\end{enumerate}
+\begin{lemma}\textbf{(Rank Lemma)}
+After an arbitrary number of union operations, there are at most $n/2^r$ objects with rank $r$, in which $r\geq 0$. 
+\end{lemma}
+\begin{proof}
+First, if $x,y$ have the same rank $r$, then their subtrees must be disjoint. If they had a common node $z$, then path $z\rightarrow x$ and $z\rightarrow y$ would have to superpose with each other because each node has only one parent. It would become inevitable that one of $x$ and $y$ was an ancestor of the other, which is impossible because they have the same rank. 
+
+Then it can be verified that a rank-$r$ object has a subtree of size $\geq 2^r$. We will prove it by induction. In the base case, all subtrees are of rank $0$ and size 1. When two subtrees whose roots have different ranks merge, the situation is simple: no rank changes, while sizes become larger, hence the claim cannot be violated. When two subtrees $t_1, t_2$ whose roots have the same rank $r$ merge, the rank of the new root is $r+1$, and it is the only node whose rank changes. Since $t_1,t_2$ both have size $\geq 2^r$, the new tree must have size $\geq 2^{r+1}$, therefore the claim is observed. 
+
+The rank lemma follows directly from the two claims above.    
+\end{proof}
+According to the rank lemma, there is at most 1 object with rank $\log n$, which can only be the root. Thus the tree is at most of height $\log n$, and the running time of $find()$ and $union()$ is $O(\log n)$. 
+\subsection{Path Compression}
+\begin{algorithmic}[1]
+\Function{find}{x}
+\State{y = x}
+\While{y $\neq$ parent(y)}
+\State{y = parent(y)}
+\EndWhile
+\While{parent(x) $\neq$ y}\Comment{y is now the leader}
+\State{t = parent(x)}
+\State{parent(x) = y}
+\State{x = t}
+\EndWhile
+\State{return y}
+\EndFunction
+\end{algorithmic}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi

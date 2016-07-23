@@ -1,5 +1,7 @@
 \ifx\PREAMBLE\undefined
 \input{preamble}
+\externaldocument{DataStructures}
+\externaldocument{DivideConquer}
 \begin{document}
 \fi
 \chapter{Greedy Algorithms}
@@ -255,6 +257,8 @@ Union-Find data structure maintains the partition of a set of objects. It suppor
 \item[$find(X)$]Returns the name of the group to which $X$ belongs.
 \item[$union(C_i, C_j)$]Merge groups $C_i,C_j$ into one group.
 \end{description} 
+A more detailed introduction to union find can be found in section \ref{unionfind}.
+
 In the problem of cycle check, the objects are the nodes, and they are partitioned into different connected components of $(V,T)$. When a new edge $(u,v)$ is added to $T$, if $u,v$ are inside the same group, i.e. $find(u)=find(v)$, then $(u,v)$ introduces a cycle. 
 
 In order that the cycle check operation is $O(1)$, the union-find here needs to carry out $find(u)$ in constant time. This can be achieved by maintaining a linked structure per connected component of $(V,T)$. Each component has an arbitrary leader node to which all nodes in the same connected component point. The leader represents the name of the connected component. $find(u)$ returns the leader in $O(1)$ time, thus cycle check can be finished in $O(1)$ time. 
@@ -295,7 +299,6 @@ If $p,q$ were chosen in some iteration of Algorithm \ref{greedyclustering}, i.e.
 
 If $p,q$ were not chosen in any iteration of the greedy algorithm, i.e. they were ``indirectly merged'', then let's consider the path from $p$ to $q$ inside $C_i$ formed by all direct greedy merges. Because $p\in \hat{C_i}, q\in\hat{C_j}, i\neq j,$ we are certainly able to find two consecutive points $p',q'$ on this path such that $p'\in C_i, q'\in C_j$. Then the problem is reduced to the case above, and we have $\hat{S}\leq d(p',q')\leq S$.   
 \end{proof}
-\section{Union Find}
 \section{Huffman's Code}
 \subsection{Problem Definition}
 Text has to be encoded into binary codes in order to be processed by modern computers. An encoding method maps each character inside an alphabet $\Sigma$ into a binary string. If all characters are encoded with binary strings of the same length, then $n$ bits can represent at most $2^n$ characters. For example, ASCII uses 8 bits to represent 128 characters. 
