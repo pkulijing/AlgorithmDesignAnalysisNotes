@@ -453,20 +453,123 @@ The rank lemma follows directly from the two claims above.
 \end{proof}
 According to the rank lemma, there is at most 1 object with rank $\log n$, which can only be the root. Thus the tree is at most of height $\log n$, and the running time of $find()$ and $union()$ is $O(\log n)$. 
 \subsection{Path Compression}
+If $find()$ operation is expected to be executed multiple times for each object, which is almost always the case, it makes no sense to repeat the same traversal job every time. Instead, we can make the parent pointer of all objects met during the process point to the root, i.e. the leader, so that later $find()$ operation on these objects take $O(1)$ time. This modification adds only a constant factor overhead to the first $find()$ on objects who are not direct children of the leader, and greatly speeds up subsequent $find()$ operations.
 \begin{algorithmic}[1]
 \Function{find}{x}
-\State{y = x}
-\While{y $\neq$ parent(y)}
-\State{y = parent(y)}
+\State{leader = x}
+\While{leader $\neq$ parent(leader)}
+\State{leader = parent(leader)}
 \EndWhile
-\While{parent(x) $\neq$ y}\Comment{y is now the leader}
+\While{parent(x) $\neq$ leader}
 \State{t = parent(x)}
-\State{parent(x) = y}
+\State{parent(x) = leader}
 \State{x = t}
 \EndWhile
-\State{return y}
+\State{return leader}
 \EndFunction
 \end{algorithmic}
+We will try to precisely analyze the performance enhancement of union by rank brought by path compression. Ranks are maintained exactly as without path compression. In this case, rank[x] is only an upper bound on the maximum number of steps along a path from a leaf to x. But the rank lemma still holds, and we still have rank(parent(x)) $>$ rank(x) for all non-root x.
+\subsubsection{Hopcroft-Ullman's Analysis}
+\begin{theorem} \textbf{(Hopcroft-Ullman Theorem)}
+With union by rank and path compression, $m$ union + find operations take $O(m\log^*n)$ time, where 
+\begin{equation*}
+\log^*n=\begin{cases}
+0&if\:n\leq 1\\
+1+\log^*(\log n)&if\:n>1
+\end{cases}
+\end{equation*}
+\end{theorem}
+We will focus on the case when $m=\Omega(n).$
+\begin{proof}
+First we divide the interval [0,n] into a few rank blocks:\{0\}, \{1\}, \{2,3,4\}, \{5,$\dots,2^4$\}, \{17,$\dots,2^16$\}, \{65537,$\dots,2^65536$\}, $\dots$, \{...$n$\}. In general, there are $O(\log^*n)$ rank blocks. 
+
+Consider a non-root object x, thus rank(x) is fixed. At a given time point, we call an object x good if one of the two conditions is satisfied:
+\begin{itemize}
+\item x or parent(x) is a root;
+\item rank(parent(x)) is in a larger block than rank(x). 
+\end{itemize}
+If neither condition is satisfied, we say x is bad. 
+
+A $find()$ operation can visit at most $O(\log^*n)$ good nodes (root, direct child of root + at most 1 in each rank block). In $m$ operation, these visits take $O(m\log^*n)$ time. 
+
+To compute the time consumption of visits to bad nodes, consider a rank block \{k+1, $\dots, 2^k$\}. Note that each time a bad node is visited, its parent is changed to another node (its then root) with strictly larger rank than its current parent. For a bad node x with rank(x) in this block, this process can happen at most $2^k$ times before x becomes good. Therefore the number of visits to x while x is bad and rank(x) is in this block is $\leq 2^k$. According to the rank lemma, the number of objects x with rank in this block is $\leq\sum\limits_{i=k+1}^{2^k}\frac{n}{2^i}<\frac{n}{2^k}$. Thus the total number of visits to bad objects in this block is $\leq 2^k\cdot\frac{n}{2^k}=n$. Since there are $O(\log^* n)$ blocks, the total time spent on visiting bad nodes is $O(n\log^*n)$. 
+
+In conclusion, the running time of $m$ operations is $O((m+n)\log^*n)$. Since we are interested in the case when $m=\Omega(n)$, it is equivalent to $O(m\log^*n)$. 
+\end{proof}
+\subsubsection{Tarjan's Analysis}
+Hopcroft-Ullman theorem already provides an upper bound quite close to linear running time. Yet Tarjan proved that there is an even better upper bound. 
+
+For integers $r\geq 1, k\geq 0$, the Ackermann function $A_k(r)$ is defined as 
+\begin{align*}
+A_0(r)&=r+1\\
+A_k(r)&=\underbrace{(A_{k-1}\circ A_{k-1}\circ\dots\circ A_{k-1})}_{r\text{ times}}(r),\:k\geq 1
+\end{align*}
+It's easy to derive that $A_1(r)=2r$, $A_2(r)=r2^r$. Because $A_2(r)$ is larger than $2^r$, $A_3(r)$ is larger than the result of applying $2^r$ $r$ times on $r$, i.e. the ``exponential tower'' of height $r$:
+$$A_3(r)>{{2^2}^2}^{\dots r\:times\dots}.$$
+Specifically, $A_1(2)=4$, $A_2(2)=8$, $A_3(2)=A_2(A_2(2))=A_2(8)=8\times 2^8=2048$. $A_4(2)=A_3(2048)$, which is larger than the exponential tower of height 2048. 
+
+For integer $n\geq 4$, we define the inverse Ackermann function 
+$$\alpha(n)=\text{ minimum value of $k$ such that }A_k(2)\geq n.$$
+Since $A_k(2)$ blows up fast as $k$ gets larger, $\alpha(n)$ grows extremely slow. As a comparison:
+\begin{equation*}
+\alpha(n)=\begin{cases}
+1&n=4\\
+2&n=5,\dots,8\\
+3&n=9,\dots,2048\\
+4&n=2049,\dots,>{{2^2}^2}^{\dots 2048\:times\dots}\\
+&\dots\\
+\end{cases}
+\log^*n=\begin{cases}
+1&n=2\\
+2&n=3,4\\
+3&n=5,\dots,16\\
+4&n=17,\dots,65536\\
+5&n=65537,\dots,2^{65536}\\
+\end{cases}
+\end{equation*}
+For $n={{2^2}^2}^{\dots 2048\:times\dots}$, $\log^*n=2048$ while $\alpha(n)=4$.
+\begin{theorem} \textbf{(Tarjan's Theorem)}
+With union by rank and path compression, $m$ union + find operations take $O(m\alpha(n))$ time.
+\end{theorem}
+In order to prove Hopcroft-Ullman's theorem, we used the fact that if parent(x) is updated from p to p', then rank(p') $\geq$ rank(p) + 1. To verify Tarjan's theorem, we will use a stronger version of this claim: in most cases rank(p') is much bigger than rank(p) (not just by 1). 
+\begin{proof}
+Consider a non-root object x, thus rank(x) is fixed. Define 
+\begin{center}
+$\delta(x)$ = max $k$ such that rank(parent(x)) $\geq$ $A_k($rank(x)).
+\end{center}
+As a few examples:\\
+\begin{equation*}
+\begin{cases}
+\delta(x)\geq 0\iff \text{rank(parent(x))} \geq \text{rank(x) + 1 (always)}\\
+\delta(x)\geq 1\iff \text{rank(parent(x))} \geq 2\cdot\text{rank(x)}\\
+\delta(x)\geq 2\iff \text{rank(parent(x))} \geq \text{rank(x)}\cdot 2^{\text{rank(x)}}\\
+\end{cases}
+\end{equation*}
+Note that for all object x with rank(x)$\geq 2$, we must have $\delta(x)\leq\alpha(n)$, because 
+$$A_{\alpha(n)}(\text{rank(x)})\geq A_{\alpha(n)}(2)\geq n\geq\text{rank(parent(x))}.$$ 
+An object is defined as bad if \textbf{all} of the following conditions hold:
+\begin{enumerate}
+\item x is not a root;
+\item parent(x) is not a root;
+\item rank(x)$\geq$2;
+\item x has an ancestor with $\delta(x)=\delta(y)$.
+\end{enumerate}
+Otherwise x is good. Along an object-root path, the maximum number of good objects is $\Theta(\alpha(n))$: 1 root, 1 direct child of root, 1 object with rank 0, 1 object with rank 1, 1 object x with $\delta(x)=k$ for each $k=0,1,\dots,\alpha(n)$. Thus the total number of visits to good objects is $O(m\alpha(n))$.
+
+Consider the visit to a bad object x. x has an ancestor y with $\delta(x)=\delta(y)=k$. Suppose x's parent is p, y's parent is p', then we have 
+\begin{center}
+rank(x's new parent) $\geq$ rank(p') $\geq A_k($rank(y)) $\geq A_k($rank(p))
+\end{center}
+The first and third $\geq$ are because rank only goes up from child to parent. The second $\geq$ comes from the definition of $\delta(y)$. This relation indicates that path compression at least applies the $A_k$ function to rank(x's parent). If r = rank(x), then after r such pointer updates, we have 
+\begin{center}
+rank(parent(x)) $\geq\underbrace{(A_k\circ\dots\circ A_k)}_{\text{r times}}(r)=A_{k+1}(r).$ 
+\end{center} 
+Hence, every r visits to x while x is bad increases $\delta(x)$. Because $\delta(x)\leq\alpha(n)$, there can be at most $r\alpha(n)$ visits to x while it's bad. Thus the total number of visits to bad objects is 
+\begin{equation*}
+N(bad)\leq\sum\limits_{\text{x is bad}}rank(x)\alpha(n)\leq\alpha(n)\sum\limits_{r\geq 2}\frac{n}{2^r}<n\alpha(n)
+\end{equation*}
+In conclusion, the total running time is $O(m\log n)+O(n\log n)=O(m\log n)$.
+\end{proof}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
