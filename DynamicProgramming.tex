@@ -1,0 +1,173 @@
+\ifx\PREAMBLE\undefined
+\input{preamble}
+\begin{document}
+\fi
+\chapter{Dynamic Programming}
+In this chapter we will introduce the last algorithm design paradigm: dynamic programming.
+\section{Max-weight Independent Sets}
+Our first example of dynamic programming is a relatively simple graph problem.
+\begin{description}
+\item[Input]A path graph $G(V,E)$ with non-negative weights on vertices.
+\item[Output]An independent set, i.e. a subset of $V$ in which no vertices are adjacent, of maximum total weight.
+\end{description}
+\begin{center}
+\begin{tikzpicture}
+\tikzstyle{chosen} = [fill=red!20!, circle, draw=red]
+\tikzstyle{normal} = [draw, circle]
+\node[normal] (0) at (-4,0) {1};
+\node[chosen] (1) at (-2,0) {4};
+\node[normal] (2) at (0,0) 	{5};
+\node[chosen] (3) at (2,0)	{4};
+\draw (0) -- (1) -- (2) --(3);
+\end{tikzpicture}
+\end{center}
+In the example above, the WIS is obviously the two red nodes. Generally, a brute-force approach takes exponential time. An intuitive greedy algorithm does not guarantee a correct answer: it is actually wrong for the simple example above.  The divide-and-conquer paradigm cannot be applied because there is no natural correct way to combine solutions to the two sub-problems. This is when dynamic programming comes to our rescue.
+
+Let's consider the structure of an optimal solution in terms of its relationship with solutions to smaller problems. Let $S\subseteq V$ be a max-weight independent set (IS) of $G$, $v_n$ be the last vertex of the path and $v_{n-1}$ be the last but one vertex. Denote $G$ with $v_n$ deleted as $G'$, and $G$ with $v_n,v_{n-1}$ deleted as $G''$.  
+\begin{itemize}
+\item If $v_n\notin S$, then $S$ must also be a max-weight IS of $G'$, which can be proved easily by contradiction.
+\item If $v_n\in S$, then $v_{n-1}\notin S$. It can be proved easily by contradiction that $S-\{v_n\}$ is a max-weight IS of $G''$. 
+\end{itemize}
+Therefore, a max-weight IS of $G$ is either a max-weight IS of $G'$, or a max-weight IS of $G''$ + $v_n$. The same reasoning holds for smaller problems, which induces a correct recursive algorithm:
+\begin{enumerate}
+\item Recursively compute $S_1$ = max-weight IS of $G'$.
+\item Recursively compute $S_2$ = max-weight IS of $G''$.
+\item Return $S_1$ or $S_2\cup\{v_n\}$, whichever is better.
+\end{enumerate}
+The correctness of the algorithm can be verified by induction. However it takes exponential time because it is per se a variant of the brute-force algorithm.
+\begin{center}
+\begin{tikzpicture}[
+level 1/.style={sibling distance=6cm, level distance=1.5cm},
+level 2/.style={sibling distance=3cm, level distance=1.5cm},
+level 3/.style={sibling distance=2cm, level distance=1.5cm}]
+level 4/.style={sibling distance=1cm, level distance=1.5cm}]
+\tikzstyle{node} = [draw, circle,minimum size=0.8cm]
+\node[node] (0) at (0,0) {n}
+child {node[node]{n-1}
+	child {node[node]{n-2}
+		child {node[node]{n-3}}
+		child {node[node]{n-4}}
+		}
+	child {node[node]{n-3}
+		child {node[node]{n-4}}
+		child {node[node]{n-5}}
+		}
+	}
+child {node[node]{n-2}
+	child {node[node]{n-3}
+		child {node[node]{n-4}}
+		child {node[node]{n-5}}
+		}
+	child {node[node]{n-4}
+		child {node[node]{n-5}}
+		child {node[node]{n-6}}
+		}
+	};
+\end{tikzpicture}
+\end{center}
+As shown above, each sub-problem is calculated multiple times. The number of distinct sub-problems is actually $O(n)$. If we can reformulate the recursive algorithm into a bottom-up iterative algorithm, and cache the solution to a sub-problem the first time it is solved, the problem can be solved in linear time, as shown in Algorithm \ref{maxweightis}.
+\begin{algorithm}[ht]
+\caption{Max-weight Independent Set(DP)}\label{maxweightis}
+\begin{algorithmic}[1]
+\Input{Path graph $G=(V,E)$ with non-negative weight $w_i$ for each vertex $v_i$. Sub graph-composed of the first $i$ vertices is denoted by $G_i$.}
+\Output{Array $A$ with $A[i]=$ total weight of max-weight IS of $G_i$.}
+\State{$A[0]=0,A[1]=w_1$.}
+\For{$i = 2,3,\dots,n$}
+\State{$A[i]=\max\{A[i-1], A[i-2]+w_i\}$}
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+Algorithm \ref{maxweightis} only outputs the total weight of the max-weight IS of $G$. The IS itself can be reconstructed according to array $A$, as shown in Algorithm \ref{reconstructionis}. The running time is also $O(n)$.
+
+\begin{algorithm}[ht]
+\caption{Reconstruction of Max-weight Independent Set}\label{reconstructionis}
+\begin{algorithmic}[1]
+\Input{Array $A$ computed in Algorithm \ref{maxweightis}.}
+\Output{The max-weight IS $S$ of path graph $G$.}
+\State{Initialize $S=\emptyset$, $i=n$.}
+\While{$i\geq 2$}
+\If{$A[i-1]<A[i-2]+w_i$}
+\State{Add $v_i$ to $S$}
+\State{$i = i - 2$}
+\Else
+\State{$i = i - 1$}
+\EndIf
+\EndWhile
+\If{$v_2\notin S$}
+\State{Add $v_1$ to $S$}
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+\section{Principles of DP}
+After a concrete example, let's introduce a few general principles of dynamic programming. Typical DP problems  share the following traits:
+\begin{enumerate}
+\item It is easy to identify a small number of sub-problems. In the max-weight IS problem, the sub-problems are the max-weight IS of $G_i$ for $i=0,1,\dots,n$. The number of sub-problems is not necessarily linear, but it has to be reasonably small.
+\item Given solutions to smaller sub-problems, larger sub-problems can be solved quickly can correctly. This is usually expressed as a recursive relation, for example $A[i]=\max\{A[i-1],A[i-2]+w_i\}$ in the max-weight IS problem.
+\item The final solution can be computed quickly after solving all sub-problems. Usually it's just the answer to the largest sub-problem.
+\end{enumerate}
+\section{Knapsack Problem}
+\begin{description}
+\Input{$n$ items with non-negative value $v_i$ and non-negative integral size $w_i$ for item $i$. Capacity $W$, which is a non-negative integer.}
+\Output{A subset $S\subseteq\{1,2,\dots,n\}$ that maximizes $\sum\limits_{i\in S}v_i$} subject to the condition $\sum\limits_{i\in S}w_i\leq W$.
+\end{description}
+Again let's consider different situations for item $n$. If $n\notin S$, then $S$ must also be the optimal solution for the first $n-1$ items and capacity $W$. On the contrary, if $n\in S$, then $S-\{n\}$ must be the optimal solution for the first $n-1$ items and capacity $W-w_n$. Let $V_{i,x}$ represent the value of the best solution for the first $i$ items and capacity $x$, then recursively we have 
+$$V_{i,x}=\max\{V_{i-1,x},V_{i-1,x-w_i}+v_i\}.$$
+The sub-problems have been identified up to now: for each $i,x$ combination, there is a sub-problem. A DP algorithm is show in Algorithm \ref{knapsack}. The running time is obviously $O(nW)$.
+
+\begin{algorithm}[ht]
+\caption{Knapsack Problem(DP)}\label{knapsack}
+\begin{algorithmic}[1]
+\Input{$n$ items as stated above.}
+\Input{$(n+1)\times(W+1)$ 2-D array $A$ with $A[i][x]=V_{i,x}$.}
+\State{Initialize $A[0][x]=0$ for $x=0,1,\dots,W$.}
+\For{$i=1,2,\dots,n$}
+\For{$x=0,1,\dots,W$}
+\If{$x\geq w_i$}
+\State{$A[i][x]=\max\{A[i-1][x],A[i-1][x-w_i]+v_i\}$}
+\Else\State{$A[i][x]=A[i-1][x]$}
+\EndIf\EndFor\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Array $A$ records the maximized sum of value for all sub-problems. The solution to the problem, i.e. the subset $S$, can be reconstructed according to $A$, as shown in Algorithm \ref{knapsackreconstruction}.
+
+\begin{algorithm}[ht]
+\caption{Knapsack Reconstruction}\label{knapsackreconstruction}
+\begin{algorithmic}[1]
+\Input{Array $A$ computed in Algorithm \ref{knapsack}.}
+\Output{Solution $S$ to the knapsack problem.}
+\State{Initialize $S=\emptyset$, $i=n,x=W$.}
+\While{$i\geq 1$}
+\If{$A[i][x]\neq A[i-1][x]$}
+\State{Add $i$ to $S$}
+\State{$x=x-w_i$}
+\EndIf
+\State{$i=i-1$}
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+An example of Knapsack problem is show below. There are 4 items, and $W = 6$. 
+\begin{center}
+\begin{tabular}{c|cccc}
+item  & 1 & 2 & 3 & 4\\\hline
+$v_i$ & 3 & 2 & 4 & 4\\
+$w_i$ & 4 & 3 & 2 & 3\\
+\end{tabular}
+\begin{tabular}{c|ccccc}
+$A[i,x$]& $i=0$ & $i=1$ & $i=2$ & $i=3$ & $i=4$\\\hline
+$x=0$   &	0   & 0     & 0     & 0     & 0\\
+$x=1$   &	0   & 0     & 0     & 0     & 0\\
+$x=2$   &	0   & 0     & 0     & 4     & 4\\
+$x=3$   &	0   & 0     & 2     & 4     & 4\\
+$x=4$   &	0   & 3     & 3     & 4     & 4\\
+$x=5$   &	0   & 3     & 3     & 6     & 8\\
+$x=6$   &	0   & 3     & 3     & 7     & 8\\
+\end{tabular}
+\end{center}
+
+The maximum value is therefore 8, corresponding to the subset \{3,4\}.
+\section{Sequence Alignment}
+\ifx\PREAMBLE\undefined
+\end{document}
+\fi
