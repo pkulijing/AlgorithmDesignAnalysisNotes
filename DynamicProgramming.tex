@@ -107,8 +107,8 @@ After a concrete example, let's introduce a few general principles of dynamic pr
 \end{enumerate}
 \section{Knapsack Problem}
 \begin{description}
-\Input{$n$ items with non-negative value $v_i$ and non-negative integral size $w_i$ for item $i$. Capacity $W$, which is a non-negative integer.}
-\Output{A subset $S\subseteq\{1,2,\dots,n\}$ that maximizes $\sum\limits_{i\in S}v_i$} subject to the condition $\sum\limits_{i\in S}w_i\leq W$.
+\item[Input]$n$ items with non-negative value $v_i$ and non-negative integral size $w_i$ for item $i$. Capacity $W$, which is a non-negative integer.
+\item[Output]A subset $S\subseteq\{1,2,\dots,n\}$ that maximizes $\sum\limits_{i\in S}v_i$ subject to the condition $\sum\limits_{i\in S}w_i\leq W$.
 \end{description}
 Again let's consider different situations for item $n$. If $n\notin S$, then $S$ must also be the optimal solution for the first $n-1$ items and capacity $W$. On the contrary, if $n\in S$, then $S-\{n\}$ must be the optimal solution for the first $n-1$ items and capacity $W-w_n$. Let $V_{i,x}$ represent the value of the best solution for the first $i$ items and capacity $x$, then recursively we have 
 $$V_{i,x}=\max\{V_{i-1,x},V_{i-1,x-w_i}+v_i\}.$$
@@ -129,7 +129,7 @@ The sub-problems have been identified up to now: for each $i,x$ combination, the
 \end{algorithmic}
 \end{algorithm}
 
-Array $A$ records the maximized sum of value for all sub-problems. The solution to the problem, i.e. the subset $S$, can be reconstructed according to $A$, as shown in Algorithm \ref{knapsackreconstruction}.
+Array $A$ records the maximized sum of value for all sub-problems. The solution to the problem, i.e. the subset $S$, can be reconstructed according to $A$, as shown in Algorithm \ref{knapsackreconstruction}. Note that the running time is only $O(n)$.
 
 \begin{algorithm}[ht]
 \caption{Knapsack Reconstruction}\label{knapsackreconstruction}
@@ -168,6 +168,55 @@ $x=6$   &	0   & 3     & 3     & 7     & 8\\
 
 The maximum value is therefore 8, corresponding to the subset \{3,4\}.
 \section{Sequence Alignment}
+\begin{description}
+\Input{String $X=x_1x_2\dots x_m$, $Y=y_1y_2\dots y_m$ over some alphabet $\Sigma$. Penalty $\alpha_{ab}$ for aligning $a$ with $b$, and $\alpha_{gap}$ for inserting a gap. Presumably $\alpha_{aa}=0,\forall a\in\Sigma$.}
+\Output{An alignment of $X$ and $Y$ with minimum total penalty.}
+\end{description}
+Consider the last position of the alignment. There are 3 possible cases: $x_m\:\&\:y_n$, $x_m\:\&\:gap$, or $gap\:\&\:y_n$. Let $X'=X-x_m$ and $Y'=Y-y_j$. If the optimal alignment falls into the first case, then it can be proved by contradictory that it is the optimal alignment of $X'$ and $Y'$ plus aligning $x_m$ with $y_n$. Similar reasoning can be made for the other 2 cases. In general, let $X_i$ represent the first $i$ letters of $X$ and $Y_j$ represent the first $j$ letters of $Y$. Let $P_{ij}$ represent the optimal penalty for aligning $X_i$ and $Y_j$. Then we must have
+\begin{equation*}
+P_{ij}=\min\begin{cases}
+\alpha_{x_iy_j}+P_{i-1,j-1}\\
+\alpha_{gap}+P_{i,j-1}\\
+\alpha_{gap}+P_{i-1,j}\\
+\end{cases}\end{equation*}
+As for the base cases, obviously we have $P_{0i}=P_{i0}=i\cdot\alpha_{gap}$. Now we hear the knock at the door of a DP algorithm, as shown in Algorithm \ref{alignmentdp}. Its running time is $O(mn)$.
+\begin{algorithm}[ht]
+\caption{Sequence Alignment(DP)}\label{alignmentdp}
+\begin{algorithmic}[1]
+\Input{Two strings $X,Y$ as stated above.}
+\Output{$(m+1)\times(n+1)$ 2D array $A$ with $A[i][j]=P_{ij}$.}
+\State{Initialize $A[i][0]=A[0][i]=i\cdot\alpha_{gap}$ for all $i$.}
+\For{$i=1$ \textbf{to} $m$}
+\For{$j=1$ \textbf{to} $n$}
+\State{$A[i][j]=\min\{A[i-1][j-1]+\alpha_{ij},A[i][j-1]+\alpha_{gap},A[i-1][j]+\alpha_{gap}\}$}
+\EndFor\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Just like before, the actual solution can be reconstructed based on $A$, as shown in Algorithm \ref{alignmentreconstruction}. The running time is $O(m+n)$.
+\begin{algorithm}[ht]
+\caption{Sequence Alignment Reconstruction}\label{alignmentreconstruction}
+\begin{algorithmic}[1]
+\Input{Array $A$ computed in Algorithm \ref{alignmentdp}}.
+\Output{The actual alignment}
+\State{$i=m,j=n$}
+\While{$i>0$ or $j>0$}
+\If{$i==0$}
+\State{Align all $j$ left characters in $Y$ align with a gap and return}
+\ElsIf{$j==0$}
+\State{Align all $i$ left characters in $X$ align with a gap and return}
+\ElsIf{$A[i][j]==A[i-1][j-1]+\alpha_{ij}$}
+\State{Align $x_i$ with $y_j$}
+\State{$i=i-1,j=j-1$}
+\ElsIf{$A[i][j]==A[i][j-1]+\alpha_{gap}$}
+\State{Align $y_j$ with a gap}
+\State{$j=j-1$}
+\Else\State{Align $x_i$ with a gap}
+\State{$i=i-1$}
+\EndIf\EndWhile
+\end{algorithmic}
+\end{algorithm}
+\section{Optimal Binary Search Trees}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
