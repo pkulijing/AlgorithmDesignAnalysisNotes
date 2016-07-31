@@ -69,7 +69,7 @@ As shown above, each sub-problem is calculated multiple times. The number of dis
 \begin{algorithm}[ht]
 \caption{Max-weight Independent Set(DP)}\label{maxweightis}
 \begin{algorithmic}[1]
-\Input{Path graph $G=(V,E)$ with non-negative weight $w_i$ for each vertex $v_i$. Sub graph-composed of the first $i$ vertices is denoted by $G_i$.}
+\Input{Path graph $G=(V,E)$ with non-negative weight $w_i$ for each vertex $v_i$. Sub graph composed of the first $i$ vertices is denoted by $G_i$.}
 \Output{Array $A$ with $A[i]=$ total weight of max-weight IS of $G_i$.}
 \State{$A[0]=0,A[1]=w_1$.}
 \For{$i = 2,3,\dots,n$}
@@ -77,6 +77,7 @@ As shown above, each sub-problem is calculated multiple times. The number of dis
 \EndFor
 \end{algorithmic}
 \end{algorithm}
+
 Algorithm \ref{maxweightis} only outputs the total weight of the max-weight IS of $G$. The IS itself can be reconstructed according to array $A$, as shown in Algorithm \ref{reconstructionis}. The running time is also $O(n)$.
 
 \begin{algorithm}[ht]
@@ -217,6 +218,44 @@ Just like before, the actual solution can be reconstructed based on $A$, as show
 \end{algorithmic}
 \end{algorithm}
 \section{Optimal Binary Search Trees}
+In a BST, the time consumption of searching for an item $i$ is $O(d_i)$, in which $d_i$ is the depth of $i$ in the BST. If the search for each item is equally likely to occur, the ideal BST should be balanced. Nonetheless, if we have knowledge of the likelihood for each item to be searched for, the optimal BST is not necessarily balanced. More frequently visited items should be put closer to the root. In Huffman code problem, we aimed at minimizing the average coding length; here, our target is to minimize the average search time.
+\begin{description}
+\Input{Frequencies $p_i$ for items $i=1,2,\dots,n$. }
+\Output{An optimal BST that minimizes the average search time
+$C(T)=\sum\limits_{i}p_i(d_i+1).$}
+\end{description}
+For Huffman coding, a bottom-up greedy algorithm efficiently solves the problem. But here either bottom-up or top-down greedy algorithm cannot guarantee an optimal solution.
+
+Suppose the optimal BST $T$ has left child tree $T_1$, right child tree $T_2$ and root $r$. Items $\{1,\dots,r-1\}$ are contained in $T_1$, while $\{r+1,\dots,n\}$ lie in $T_2$. Then we have
+\begin{align*}
+C(T)&=\sum\limits_{i=1}^np_i(d_i+1)=p_r + \sum\limits_{i=1}^{r-1}p_i(d_i+1) + \sum\limits_{i=r+1}^{n}p_i(d_i+1)\\
+&=p_r+\sum\limits_{i=1}^{r-1}p_i(d_{1i}+1 + 1) + \sum\limits_{i=r+1}^{n}p_i(d_{2i}+1 + 1)\\
+&=p_r+C(T_1)+\sum\limits_{i=1}^{r-1}p_i + C(T_2)+\sum\limits_{i=r+1}^{n}p_i\\
+&=C(T_1)+C(T_2)+\sum\limits_{i=1}^{n}p_i.
+\end{align*}
+Thus it can be proved by contradiction that $T_1$ must be optimal for $\{1,\dots,r-1\}$, and $T_2$ must be optimal for $\{r+1,\dots,n\}$. 
+\begin{lemma}\textbf{Optimal Structure Lemma}
+If $T$ is an optimal BST for the keys $\{1,\dots,n\}$ with root $r$, then its subtrees $T_1$ and $T_2$ must be optimal BSTs respectively for $\{1,\dots,r-1\}$ and $\{r+1,\dots,n\}$.
+\end{lemma}
+For $1\leq i\leq j\leq n$, let $C_{ij}$ represent the average search time of an optimal BST for items $\{i,\dots,j\}$. According to the optimal structure lemma, we can set up the recurrence relation:
+\begin{equation*}
+C_{ij}=\min\limits_{r=i}^j\left(C_{i,r-1}+C_{r+1,j}\right)+\sum\limits_{k=i}^jp_k,
+\end{equation*}
+which leads to the DP algorithm \ref{optimalbstdp} to solve the problem.
+\begin{algorithm}[ht]
+\caption{Optimal BST(DP)}\label{optimalbstdp}
+\begin{algorithmic}[1]
+\Input{Frequencies $p_i$ for items $i=1,2,\dots,n$. }
+\Output{$n\times n$ 2D array $A$ with $A[i][j]$ representing optimal average search time for items $\{i,\dots,j\}$. }
+\State{Initialize $A[i][i]=p_i$ for $i=1,\dots,n$.}\Comment{Base case: single node.}
+\For{$s=0$ \textbf{to} $n-1$}\Comment{$A[i][j]=0$ if $i>j$ or $i,j$ out of bound. }
+\For{$i=1$ \textbf{to} $n-s$}
+\State{$A[i][i+s]=\min\limits_{r=i}^{i+s}\left(A[i][r-1]+A[r+1][i+s]\right)+\sum\limits_{k=i}^{i+s}p_k$}
+\EndFor\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+In total there are $O(n^2)$ sub-problem, and each requires $O(j-i)$ time. Hence the overall running time is $O(n^3)$. Nonetheless it has been proven that an optimized version of the algorithm takes only $O(n^2)$ time.
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
