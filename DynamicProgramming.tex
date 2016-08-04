@@ -256,6 +256,72 @@ which leads to the DP algorithm \ref{optimalbstdp} to solve the problem.
 \end{algorithm}
 
 In total there are $O(n^2)$ sub-problem, and each requires $O(j-i)$ time. Hence the overall running time is $O(n^3)$. Nonetheless it has been proven that an optimized version of the algorithm takes only $O(n^2)$ time.
+\section{Bellman Ford Algorithm}
+We've already introduced Dijkstra's algorithm to solve the shortest path problem when edge lengths are non-negative. Bellman Ford algorithm comes to our rescue when there exist edge lengths with negative lengths. Also, it provides a distributed alternative to Dijkstra's algorithm, which is needed to solve the Internet routing problem.
+\begin{description}
+\Input{Directed graph $G(V,E)$ with edge lengths $c_e$ for each $e\in E$ and source vertex $s\in V$. }
+\Output{For every destination $v\in V$, compute the length of a shortest $s-v$ path.}
+\end{description} 
+We face a dilemma when it comes to negative cycles: if we take them into account in the search for shortest paths, a lot of vertices will end up with shortest paths with length $-\infty$. If we require that they should not be included in the paths, the problem becomes unsolved in polynomial time, i.e. NP hard. For the moment, we just assume that they do not exist in the graphs. Later we will introduce a criteria that detects negative cycles with little increase in the amount of workload. 
+\subsection{Algorithm}
+If there exists no negative cycles, then the shortest $s-v$ path for any vertex $v$ contains at most $n-1$ edges, because any path containing $n$ edges is sure to contain a cycle, and we can always get rid of the cycle, thus reducing the total cost, without breaking the reachability from $s$ to $v$. This inspires us of the definition of the subproblems in the dynamic programming paradigm: a shortest path from $s$ to $v$ with $i$ edges, in which $i=0,1,\dots,n-1$. We have the following lemma correct even for graphs with negative cycles.
+\begin{lemma}
+Let $G(V,E)$ be a directed graph with edge length $c_e$ for edge $e$ and source vertex $s$. For any vertex $v$, let $P$ represent the shortest path from $s$ to $v$ with at most $i$ paths. Then one of the two cases must be true.
+\begin{description}
+\item[case 1]If $P$ has $\leq(i-1)$ edges, then it is also a shortest $s-v$ path with $\leq(i-1)$ edges.
+\item[case 2]If $P$ contains $i$ edges with $(w,v)$ being the last hop, then $P'=P-(w,v)$ must be the shortest $s-w$ path with $\leq(i-1)$ edges. 
+\end{description}
+\end{lemma}
+The lemma can be easily proved by contradiction. It can serve as the recursion relation for our dynamic programming algorithm. The number of candidates for the solution to the subproblem for vertex $v$ of size $i$ , whose length we will denote as $L_{i,v}$, is $1+in-degree(v)$: solution to the subproblem with size $i-1$, and every incident edge $(w,v)$ + solution to the subproblem for $w$ of size $i-1$, i.e.
+\begin{equation*}
+L_{i,v} = \min\left\{L_{i-1,v}, \min\limits_{(w,v)\in E}\left(L_{i-1,w}+c_{wv}\right)\right\},\:\forall v\in V.
+\end{equation*}
+\begin{algorithm}[ht]
+\caption{Bellman Ford Algorithm}\label{bellmanford}
+\begin{algorithmic}[1]
+\Input{Directed graph $G(V,E)$ with edge length $c_e$ for all $e$ and source vertex $s$.}
+\Output{$n\times m$ 2D array $A$ with $A[i][v]=L_{i,v}$, in which $i=0,1,\dots,n-1$, $v\in V$.}
+\State{Initialize $A[0][s]=0$ and $A[0][v]=+\infty$ for all $v\neq s$.}
+\For{$i=1$ \textbf{to} $n-1$}
+\For{each $v\in V$}
+\State{$A[i][v]=\min\left\{A[i-1][v], \min\limits_{(w,v)\in E}\left(A[i-1][w]+c_{wv}\right)\right\}$}
+\EndFor\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+As long as $G$ contains no negative cycle, $A[n-1][v]$ is guaranteed to be the length of the shortest $s-v$ path for any $v\in V$. The running time of Algorithm \ref{bellmanford} is $O(mn)$, because there are $n$ iterations in the outer loop, and each edge is examined exactly once in the inner loop. Note that if or some $j<n-1$, we have $A[j][v]=A[j-1][v]$ for all $v$, then later iterations will by no means modify the values, thus we can halt the algorithm and use $A[j][v]$ as the output. 
+\subsection{Detect Negative Cycles}
+In order to detect negative cycles, we will prove the following theorem.
+\begin{theorem}
+$G$ contains no negative cycle $\iff$ One more iteration in the Bellman Ford algorithm makes no modification to the values, i.e. we will have $A[n][v]=A[n-1][v]$ for all $v\in V$. 
+\end{theorem} 
+\begin{proof}
+($\rightarrow$) Guaranteed by the correctness of Bellman Ford algorithm. An $s-v$ path with $n$ edges can never be the shortest in a graph containing no negative cycle, thus $A[n][v]$ will be filled with the same value as $A[n-1][v]$.
+
+($\rightarrow$) Let $d(v)=A[n-1][v]=A[n][v]$. For any $(w,v)\in E$, we have 
+$$A[n][v]\leq A[n-1][w]+c_{wv},$$
+i.e. $d(v)-d(w)\leq c_{wv}$. Therefore for an arbitrary cycle $C$, its length
+$$\sum\limits_{(w,v)\in C}c_{wv}\geq \sum\limits_{(w,v)\in C}(d(v)-d(w))=0.$$
+Thus all cycles have non-negative total length.
+\end{proof}
+
+Hence, by running the extended Bellman Ford algorithm, i.e. running one more iteration after obtaining $A[n-1][v]$, we can detect whether negative cycles exist in the graph. This extra iteration does not lead to essential increase of the running time, which is still $O(mn)$. 
+\subsection{Space Optimization}
+The 2D array $A$ uses $O(n^2)$ space. If all we need is the length of the shortest path for each vertex, the space consumption can be reduced to $O(n)$, because we only need $A[i-1]$ to derive $A[i]$. However, if we hope to reconstruct the shortest paths themselves, it seems inevitable to store the whole 2D array.
+
+Yet we can do better. We can set up another 2D array $B$, in which $B[i][v]$ is the predecessor of $v$ along the shortest $s-v$ path with at most $i$ edges, or NULL if such path doest not exist. Initially $B[0][v]$ is set to NULL for all $v$. In case 1 of Algorithm \ref{bellmanford}, we simply set $B[i][v]=B[i-1][v]$, while in case 2 we set $B[i][v]=w$. Finally with $B[n-1][v]$ at hand, we can reconstruct the shortest $s-v$ path by tracing back the predecessor pointers. Only linear space is needed to store the content of $A[i],A[i-1],B[i],B[i-1]$ in each iteration.
+
+The correctness of this method can be verified as follow. Suppose the predecessor of $v$ is $w$, then the $s-w$ part of the shortest $s-v$ path must be the shortest $s-w$ path, otherwise we would be able to construct a shorter $s-v$ path. Hence the 3rd-to-last vertex along the shortest $s-v$ path is the 2nd-to-last along the shortest $s-w$ path, i.e. the predecessor of $w$. By tracing back the predecessor pointers, we finally obtain the shortest $s-v$ path.
+
+Negative cycles can also be found with the help of the predecessor pointers. In each iteration, we can check for cycles within the predecessors, i.e. $B[i]$. If a negative cycle exists, it will be detected\footnote{Still not sure of precise correctness proof.}. 
+\subsection{Internet Routing}
+The Bellman Ford algorithm is intuitively a distributed algorithm suitable for the Internet routing problem. Yet needs to be adjusted for this specific use case. 
+
+First we switch from a source driven approach to a destination driven one, i.e. all directions in the Bellman Ford algorithm are reversed. Every vertex $v$ stores the length of the shortest path from $v$ to each destination $t$ and the successor of $v$ along that path. Of course this does not mean that each machine has to know how to get to anywhere on the Internet. Thanks to the hierarchy structure of the Internet, each machine need to store only the path to some node above its own level in this hierarchy, e.g. the router of a district, or the gateway of a school, and the node will handle the rest of the routing. 
+
+Second, asynchrony needs to be taken into account. Instead of a ``pull-based'' approach, in which each vertex checks the status of its neighbors proactively, we should switch to a ``push-based'' approach, in which each vertex notices its neighbors when its status changes. The algorithm will finally converge given that there exists no negative cycle, but it might take exponential time.
+
+Third, connection failures need to be handled properly to avoid the ``counting to infinity'' problem. This is achieved in reality by making each vertex $v$ store the entire shortest path to destinations, which significantly causes more space consumption, but guarantees the robustness in case of failures, and also permits more sophisticated route selection, i.e. selection of intermediate stops.
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
