@@ -322,6 +322,75 @@ First we switch from a source driven approach to a destination driven one, i.e. 
 Second, asynchrony needs to be taken into account. Instead of a ``pull-based'' approach, in which each vertex checks the status of its neighbors proactively, we should switch to a ``push-based'' approach, in which each vertex notices its neighbors when its status changes. The algorithm will finally converge given that there exists no negative cycle, but it might take exponential time.
 
 Third, connection failures need to be handled properly to avoid the ``counting to infinity'' problem. This is achieved in reality by making each vertex $v$ store the entire shortest path to destinations, which significantly causes more space consumption, but guarantees the robustness in case of failures, and also permits more sophisticated route selection, i.e. selection of intermediate stops.
+\section{All-Pairs Shortest Paths}
+\subsection{Problem Definition}
+We've been dealing with shortest paths with a vertex is fixed as source. The all-pairs shortest path problem aims at obtaining the shortest path for any two vertices.
+\begin{description}
+\Input{Directed graph $G(V,E)$ with edge cost $c_e$ for each $e\in E$.}
+\Output{Either compute the length of a shortest $u\rightarrow v$ path for all pairs of vertices $u,v$, or report the existence of a negative cycle.}
+\end{description}
+If there are no negative edges, we can solve the APSP problem by running Dijkstra's algorithm $n$ times, which takes $O(mn\log n)$ time. In a sparse graph, i.e. when $m=O(n)$, this is equivalent to $O(n^2\log n)$. In a dense graph, i.e. when $m=O(n^2)$, this is $O(n^3\log n)$. 
+
+If negative edges are allowed, we have to instead run Bellman Ford algorithm $n$ times, thus we end up with time consumption $O(mn^2)$, which is equivalent to $O(n^3)$ for sparse graph and $O(n^4)$ for dense graph.
+\subsection{Floyd Warshall Algorithm}
+Floyd Warshall algorithm is a $O(n^3)$ algorithm that solves the APSP problem. It is as good as Bellman-Ford algorithm for sparse graphs, and better for dense graphs. Whether there exists an algorithm that solves the APSP problem for dense graphs significantly faster than $O(n^3)$ remains an open question.
+
+In the context of F-W algorithm, the vertices are ordered arbitrarily, i.e. we have $V=\{1,2,\dots,n\}$. Let $V^{(k)}=\{1,2,\dots,k\}$. Suppose $G$ has no negative cycle, then we have the following lemma.
+\begin{lemma}\textbf{Optimal Substructure Lemma}
+For a specific pair of vertices $i,j$, let $P$ be a shortest $i-j$ path with all internal nodes, i.e. nodes along the path other than $i$ and $j$, in $V^{(k)}$. Then one of the two cases must be true.
+\begin{description}
+\item[case 1]If $k$ is not internal to $P$, then $P$ is a shortest $i-j$ path with all internal nodes in $V^{(k-1)}$.
+\item[case 2]If $k$ is internal to $P$, then $P=P_1+P_2$, in which $P_1$ is the shortest $i-k$ path with all internal nodes in $V^{(k-1)}$ and $P_2$ is the shortest $k-j$ path with all internal nodes in $V^{(k-1)}$.
+\end{description}
+\end{lemma}
+The proof already seems cliche to us. The lemma reveals the recurrence relation needed for the DP algorithm, as shown in Algorithm \ref{floydwarshall}.
+\begin{algorithm}[ht]
+\caption{Floyd Warshall's APSP Algorithm}\label{floydwarshall}
+\begin{algorithmic}[1]
+\Input{Directed graph $G(V,E)$ with edge length $c_e$ for all $e$, containing no negative cycle.}
+\Output{$n\times n\times(n+1)$ 3D array $A$ with $A[i][j][k]$ representing the length of the shortest $i-j$ path with all internal nodes in $V^{k}$.}
+\State{Initialize $A[i][j][0]=\begin{cases}
+0&if\:i=j\\
+c_{ij}&if\:(i,j)\in E\\
++\infty&if\:i\neq j\:and\:(i,j)\notin E
+\end{cases}$}
+\For{$k=1$ to $n$}
+\For{$i=1$ to $n$}
+\For{$j=1$ to $n$}
+\State{$A[i][j][k]=\min\{A[i][j][k-1], A[i][k][k-1]+A[k][j][k-1]\}$}
+\EndFor\EndFor\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Each sub problem takes $O(1)$ time, thus the overall time consumption is $O(n^3)$. 
+
+If there exists a negative cycle, then we will have $A[i][i]<0$ for at least one $i\in V$ at the end of the algorithm, which can be used for the detection of negative cycles.
+
+In terms of reconstruction, we can save an $n\times n$ 2D array $B$ in which $B[i][j]$ represents the max label among internal nodes on a shortest $i-j$ path. In case 2 of algorithm \ref{floydwarshall}, we set $B[i][j]=k$.
+\subsection{Johnson's Algorithm}
+John's algorithm enables us to solve the APSP problem with 1 invocation of Bellman Ford and $n$ invocations of Dijkstra when there exists negative edges. 
+
+It is not always possible to choose a source vertex that can reach any vertex in the graph. Thus we create a fake source vertex $s$ that has an edge of cost 0 to every vertex. We run Bellman Ford algorithm for $s$, and obtain $p_v$, the length of the shortest path from $s$ to each vertex $v$. Consider an edge $i\rightarrow j$. Since the optimal $s-i$ path + $i\rightarrow j$ forms an $s-j$ path, we must have $p_i+c_{ij}\geq p_j$, i.e. $$c'_{ij}=c_{ij}+p_i-p_j\geq 0.$$
+If we substitute $c_{ij}$, the cost of edge $i\rightarrow j$ with $c'_{ij}$, then the new graph contains no negative edge, which makes it eligible for Dijkstra's algorithm. Consider a path $s-t$ with length $L_{st}$ in the original graph.  The length of the new $s-t$ path is 
+$$L'_{st}=L_{st}+p_s-p_t. $$
+The difference between $L_{st}$ and $L'_{st}$ is constant, thus a shortest path in the original graph remains shortest in the new graph.
+
+As a summary, we have John's algorithm illustrated in Algorithm 
+\begin{algorithm}[ht]
+\caption{Johnson's APSP Algorithm}\label{apspjohnson}
+\begin{algorithmic}[1]
+\Input{Directed graph $G(V,E)$ with edge length $c_e$ for all $e$.}
+\Output{Report a negative cycle or  }
+\State{Form graph $G'$ by adding a new vertex $s$ and a new edge $(s,v)$ of length 0 for each $v\in V$. }\Comment{$O(n)$}
+\State{Run Bellman Ford on $G'$ with source $s$. If a negative cycle is detected, halt and report. }\Comment{The negative cycle cannot contain $s$ because it has no ingoing edge. $O(mn)$}
+\State{Define $p_v$ = length of shortest $s-v$ path in $G'$. }
+\State{For each edge $(u,v)\in E$, define $c'_{uv}=c_{uv} + p_u-p_v$ }\Comment{$O(m)$}
+\State{For each vertex $u\in G$, run Dijkstra in $G$ with source $u$ and edge length $\{c'_e\}$ to obtain the shortest $u-v$ path $d'(u,v)$ for each $v\in V$. }\Comment{$O(nm\log n)$}
+\State{For each pair of $(u,v)$, return the shortest path length $d(u,v)=d'(u,v)+p_v-p_u$. }\Comment{$O(n^2)$}
+\end{algorithmic}
+\end{algorithm}
+
+The overall running time is dominated by the Dijkstra invocations, i.e. $O(mn\log n)$. 
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
