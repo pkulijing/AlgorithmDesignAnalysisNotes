@@ -280,7 +280,7 @@ L_{i,v} = \min\left\{L_{i-1,v}, \min\limits_{(w,v)\in E}\left(L_{i-1,w}+c_{wv}\r
 \caption{Bellman Ford Algorithm}\label{bellmanford}
 \begin{algorithmic}[1]
 \Input{Directed graph $G(V,E)$ with edge length $c_e$ for all $e$ and source vertex $s$.}
-\Output{$n\times m$ 2D array $A$ with $A[i][v]=L_{i,v}$, in which $i=0,1,\dots,n-1$, $v\in V$.}
+\Output{$n\times n$ 2D array $A$ with $A[i][v]=L_{i,v}$, in which $i=0,1,\dots,n-1$, $v\in V$.}
 \State{Initialize $A[0][s]=0$ and $A[0][v]=+\infty$ for all $v\neq s$.}
 \For{$i=1$ \textbf{to} $n-1$}
 \For{each $v\in V$}
@@ -329,6 +329,7 @@ We've been dealing with shortest paths with a vertex is fixed as source. The all
 \Input{Directed graph $G(V,E)$ with edge cost $c_e$ for each $e\in E$.}
 \Output{Either compute the length of a shortest $u\rightarrow v$ path for all pairs of vertices $u,v$, or report the existence of a negative cycle.}
 \end{description}
+
 If there are no negative edges, we can solve the APSP problem by running Dijkstra's algorithm $n$ times, which takes $O(mn\log n)$ time. In a sparse graph, i.e. when $m=O(n)$, this is equivalent to $O(n^2\log n)$. In a dense graph, i.e. when $m=O(n^2)$, this is $O(n^3\log n)$. 
 
 If negative edges are allowed, we have to instead run Bellman Ford algorithm $n$ times, thus we end up with time consumption $O(mn^2)$, which is equivalent to $O(n^3)$ for sparse graph and $O(n^4)$ for dense graph.
