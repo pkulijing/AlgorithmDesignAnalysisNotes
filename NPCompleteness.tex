@@ -64,7 +64,17 @@ The dynamic programming algorithm that we have introduced is one such example. W
 \Input{An undirected graph $G=(V,E)$.}
 \Output{A minimum-cardinality \textbf{vertex cover}, i.e. a subset $S\subseteq V$ that contains at least one end point of each edge of $G$.}
 \end{description}
-For instance, the minimum size of a vertex cover for a star graph is 1, while for a complete graph (a ``clique'') it is $n-1$. In general, it is an NP-complete problem. We will take the 3rd approach above, i.e. try to devise an exponential algorithm better than brute-force search.
+For instance, the minimum size of a vertex cover for a star graph is 1, while for a complete graph (a ``clique'') it is $n-1$. 
+\begin{theorem}
+A set is a vertex cover if and only if its complement is an independence set.
+\end{theorem}
+\begin{proof}
+A set is a vertex cover \\
+$\iff$ Each edge of the graph is adjacent to at least one vertex in the set \\
+$\iff$ Each edge of the graph is adjacent to at most one vertex not in the set, i.e. in its complement\\
+$\iff$ Its complement is an independent set.
+\end{proof}
+In general, the vertex cover problem is an NP-complete problem. We will take the 3rd approach above, i.e. try to devise an exponential algorithm better than brute-force search.
 
 Consider a simpler problem: given a positive integer $k$, we would like to check whether or not there exists a vertex cover of size $\leq k$. There are in total $\binom{n}{k}$ candidate solutions. Verifying each candidate takes $O(m)$ time, thus for small $k$, brute-force search takes $O(mn^k)$ time. We can actually do better.
 \begin{lemma}\textbf{Substructure Lemma}
@@ -105,7 +115,7 @@ According to the substructure lemma, we can compute the vertex cover of a graph 
 
 There are at most $O(2^k)$ recursive calls, each call takes $O(m)$ time (construction of $G_u$ or $G_v$), thus the overall running time is $O(m2^k)$, which is much better than $O(mn^k)$.
 
-\section{Traveling Salesman Problem}
+\subsection{Traveling Salesman Problem}
 A brute-force search algorithm takes $O(n!)$ time. We will try to devise an algorithm with better running time. 
 
 For every destination $j\in\{1,2,\dots,n\}$ and every subset $S\subseteq\{1,2,\dots,n\}$ that contains 1 and $j$, let $L_{S,j}$ represent the minimum length of a path from 1 to $j$ that visits each vertex in $S$ exactly once.
@@ -118,7 +128,7 @@ Algorithm \ref{tsp} is the dynamic programming algorithm based on this relation.
 \begin{algorithm}[ht]
 \caption{TSP Problem}\label{tsp}
 \begin{algorithmic}[1]
-\Input{A completed undirected graph with non-negative edge costs.}
+\Input{A completed undirected graph with cost $c_{uv}$ for edge $(u,v)$.}
 \Output{$2^n\times n$ 2D array $A$ with $A[S][j]=L_{S,j}$.}
 \State{Initialize $A[S][1]=\begin{cases}
 0&if\:S=\{1\}\\
