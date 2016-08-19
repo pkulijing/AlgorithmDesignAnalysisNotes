@@ -142,7 +142,101 @@ Algorithm \ref{tsp} is the dynamic programming algorithm based on this relation.
 \State{Return $\min_{j=2,\dots,n}{A[\{1,2,\dots,n\}][j]+c_{j1}}$}
 \end{algorithmic}
 \end{algorithm}
+
 There are $n2^n$ subproblems, each of which takes $O(n)$ time. Thus the overall running time is $O(n^22^n)$.
+
+\section{Heuristics for NP-Complete Problems}
+In this section we will use Knapsack problem as an example to illustrate the use of heuristics to tackle NP-complete problems.
+\subsection{Greedy Heuristic}
+In the Knapsack problem, we aim at maximize the total value of items under limited budget of total weight. Thus, ideal items are those with big value and small weight. A natural greedy choice is to always select the item with the largest $\frac{v}{w}$ ratio. However, this greedy approach has no guarantee of proximity to the optimal solution at all. For the simple example with $v_1=1,w_1=1,v_2=999,w_2=1000,W=1000$, we will end up with result 1, while the optimal is actually 999. 
+
+A simple modification to this greedy heuristic can provide a fairly good proximity guarantee, as shown in Algorithm \ref{knapsackgreedyheuristic}.
+\begin{algorithm}[ht]
+\caption{Refined Greedy Heuristic for Knapsack Problem}\label{knapsackgreedyheuristic}
+\begin{algorithmic}[1]
+\Input{$n$ items with value $v_i$ and weight $w_i$ for item $i$. Total weight budget $W$(Assume that $w_i\leq W,\forall i$).}
+\Output{A subset $S$ of the items that maximizes $\sum_{i\in S} v_i$ and subject to $\sum_{i\in S}w_i\leq W$.}
+\State{Re-index the items so that $\frac{v_1}{w_1}\geq\frac{v_2}{w_2}\geq\dots\geq\frac{v_n}{w_n}$.}
+\State{Put the items into $S'$ in order until one does not fit.}
+\State{Let $k$ be the item with largest value.}
+\If{$\sum_{i\in S'}v_i>v_k$}
+\State{$S=S'$}
+\Else\State{$S=\{k\}$.}
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+The value of the solution provided by Algorithm \ref{knapsackgreedyheuristic} is always $\geq 50\%$ of the value of the optimal solution.
+\begin{proof}
+Suppose $S$ contains $m$ items, and we are allowed to put a fraction of item $m+1$ into $S$ so that $\sum_{i\in S}w_i=W$. Call this solution the ``greedy fractional solution''. Obviously this solution is at least as good as the optimal solution: it uses up the weight budget and guarantees larger overall $\frac{v}{w}$ ratio. 
+
+Now let's consider the result of Algorithm \ref{knapsackgreedyheuristic}. It guarantees two conditions: 
+\begin{align*}
+\sum_{i\in S}v_i&\geq\sum_{i\in S'}v_i,\\
+\sum_{i\in S}v_i&\geq v_k\geq v_{m+1}.
+\end{align*}
+Summing up the two inequalities, we have 
+\begin{align*}
+2\sum_{i\in S}v_i&\geq\sum_{i\in S'}v_i+v_{m+1}\\
+&\geq\text{value of greedy fractional solution}\\
+&\geq\text{value of optimal solution}\\
+\end{align*}
+Hence the value of the heuristic solution is at least 50\% of the value of the optimal solution.
+\end{proof}
+The 50\% proximity guarantee is tight, i.e. it is mathematically impossible to universally prove a better guarantee. Consider an example with $v_1=102,w_1=101,v_2=v_3=100,w_2=w_3=100$ and $W=200$. The optimal value is 200, while the solution provided by the refined greedy heuristic has value 102. 
+
+Nonetheless, for specific inputs, the guarantee can be better. If $w_i\leq\delta W,\forall i$, in which $\delta$ is a small value such as 10\%, $S'$ is sure to use at least $(1-\delta)$ of $W$, thus value of the heuristic solution is at least $(1-\delta)$ of that of the optimal solution.
+\subsection{DP Heuristic}
+A dynamic programming heuristic can provide arbitrary proximity guarantee specified by user, making it possible to tune the trade-off between accuracy and running time. However this is not universal for all NP-complete problems.
+
+In the last chapter we introduced a DP algorithm that solves the Knapsack problem in $O(nW)$ time. The subproblems were to calculate the maximal total value with total weight smaller than $x$ using only the first $i$ items, in which $i=0,1,\dots,n$ and $x=0,1,\dots,W$. There is actually another DP algorithm that solves another set of subproblems: for $i=0,1,\dots,n$ and $x=0,1,\dots,nv_{max}$, calculate the minimum total weight $S_{i,x}$ needed to achieve total value $\geq x$ using the first $i$ items. The recurrence relation is
+\begin{equation*}
+S_{i,x} = \min\{S_{i-1,x}, w_i+S_{i-1,x-v_i}\}
+\end{equation*} 
+$S_{i-1,x-v_i}$ is interpreted as 0 if $v_i>x$. The algorithm is shown in Algorithm \ref{knapsackdp2}. The overall algorithm is $O(n^2v_max)$.
+\begin{algorithm}[ht]
+\caption{Another DP Algorithm for Knapsack}\label{knapsackdp2}
+\begin{algorithmic}[1]
+\Input{$n$ items with value $v_i$ and weight $w_i$ for item $i$. Total weight budget $W$(Assume that $w_i\leq W,\forall i$).}
+\Output{$n\times(nv_{max}+1)$ 2D array $A$ with $A[i][x]=S_{i,x}$.}
+\State{Base case: $A[0][0]=0$, $A[0][x]=+\infty$ for $x\neq 0$.}
+\For{$i=1,2,\dots,n$}
+\For{$x=0,1,\dots,nv_{max}$}
+\If{$v_i<x$}
+\State{$A[i][x]=\min\{A[i-1][x],A[i-1][x-v_i]+w_i\}$}
+\Else{$A[i][x]=\min\{A[i-1][x],w_i\}$}
+\EndIf\EndFor\EndFor
+\State{Return largest $x$ such that $A[n][x]\leq W$.}
+\end{algorithmic}
+\end{algorithm}
+
+Algorithm \ref{knapsackdp2} requires that all $v_i$'s are integers. If they are small (polynomial in $n$), then the algorithm is already polynomial time. If that is not the case, a heuristic comes to our rescue. Its key idea is to solve a slightly incorrect but easier Knapsack instance in polynomial time. Specifically, we set $\hat{v_i}=\lfloor\frac{v_i}{m}\rfloor$ for each item and solve the Knapsack instance using $\hat{v_i}$'s as values. Now let's analyze its accuracy and running time.
+
+Since $\frac{v_i}{m}-1<\lfloor\frac{v_i}{m}\rfloor\leq \frac{v_i}{m}$, we have $v_i-m<m\hat{v_i}\leq v_i$. Let $S$ represent the heuristic solution and $S^*$ represent the optimal solutions. Then we have $\sum_{i\in S}\hat{v_i}\geq \sum_{i\in S^*}\hat{v_i}$ because $S$ is optimal for $\hat{v_i}$'s. Therefore,
+\begin{equation}\label{npknapsackeq1}
+\sum_{i\in S}v_i\geq m\sum_{i\in S}\hat{v_i}\geq m\sum_{i\in S^*}\hat{v_i}> \sum_{i\in S^*}(v_i-m)\geq \sum_{i\in S^*}v_i-mn.
+\end{equation}
+In order to achieve $(1-\epsilon)$ proximity, we need to guarantee 
+\begin{equation}\label{npknapsackeq2}
+\sum_{i\in S^*}v_i-\sum_{i\in S}v_i\leq\epsilon\sum_{i\in S^*}v_i.
+\end{equation}
+According to \eqref{npknapsackeq1}, a sufficient condition for \eqref{npknapsackeq2} is  
+\begin{equation*}
+mn\leq \epsilon\sum_{i\in S^*}v_i,
+\end{equation*}
+which can be satisfied by setting
+\begin{equation*}
+m=\frac{\epsilon v_{max}}{n}.
+\end{equation*}
+In terms of running time, since $\hat{v_{max}}\leq\frac{v_{max}}{m}=\frac{n}{\epsilon}$, the overall running time is $O(n^2\hat{v_{max}}=O(n^3/\epsilon)$.
+
+In summary, in order to guarantee $(1-\epsilon)$ proximity to the optimal solution, we should solve the Knapsack instance using $\hat{v_i}=\lfloor\frac{nv_i}{\epsilon v_{max}}\rfloor$ as value, and the running time will be $O(n^3/\epsilon)$.
+\section{Local Search}
+\subsection{Maximum Cut Problem}
+\subsection{Principles of Local Search}
+\subsection{The 2SAT Problem}
+\subsection{Random Walks on a Line}
+\subsection{Papadimitriou's Algorithm}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
