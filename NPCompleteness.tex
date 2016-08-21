@@ -289,7 +289,7 @@ In a more general case, each $e\in E$ has a non-negative weight $w_e$, and the a
 \end{description}
 One example of the clauses with $n=m=4$ is $(x_1\lor x_2)\land(\neg x_1\lor x_3)\land(x_3\lor x_4)\land(\neg x_2\lor\neg x_4)$.
 
-The 2SAT problem is a special case of the CSP that can be solved in polynomial time\footnote{It can be reduced to computing SCCs.}. 3SAT is on the contrary NP complete. We will analyze a random local search algorithm that solves the 2SAT problem, as shown in Algorithm \ref{twosatlocalsearch}.
+The 2SAT problem is a special case of the CSP that can be solved in polynomial time\footnote{It can be reduced to computing SCCs of a directed graph. The graph contains 2 vertices $x_i$, $\neg x_i$ for each variable, and two edges $\neg x\rightarrow y,\neg y\rightarrow x$ for each clause $x\lor y$. If $x_i$ and $\neg x_i$ are in the same SCC for any $x_i$, there exists no viable assignment.}. 3SAT is on the contrary NP complete. We will analyze a random local search algorithm that solves the 2SAT problem, as shown in Algorithm \ref{twosatlocalsearch}.
 \begin{algorithm}[ht]
 \caption{Paradimitriou's Local Search 2SAT Algorithm}\label{twosatlocalsearch}
 \begin{algorithmic}[1]
