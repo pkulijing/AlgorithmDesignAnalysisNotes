@@ -232,11 +232,145 @@ In terms of running time, since $\hat{v_{max}}\leq\frac{v_{max}}{m}=\frac{n}{\ep
 
 In summary, in order to guarantee $(1-\epsilon)$ proximity to the optimal solution, we should solve the Knapsack instance using $\hat{v_i}=\lfloor\frac{nv_i}{\epsilon v_{max}}\rfloor$ as value, and the running time will be $O(n^3/\epsilon)$.
 \section{Local Search}
-\subsection{Maximum Cut Problem}
 \subsection{Principles of Local Search}
+In this section we will introduce a widely used paradigm to address NP complete problems: local search. 
+
+Let $X$ be a set of solutions to a problem, for example all cuts of a graph, all possible tours of a TSP problem, all possible variable assignments of a constraint satisfaction problem, etc. For each $x\in X$, specify a subset of $X$ as its neighbors. For a graph cut, its neighborhood can be defined as the set of all cuts obtained by switching the side of one vertex; for a TSP tour, each neighbor differ from itself by 2 edges; for a CSP assignment, its neighbors differ from itself in the value of one single variable; etc. A general local search algorithm has the following structure:
+\begin{enumerate}
+\item Let $x$ be some solution.
+\item While $x$ has a neighbor $y$ superior to itself, set $x\coloneqq y$.
+\item Return the locally optimal solution $x$.
+\end{enumerate}
+
+There can be multiple local optimal solutions of a problems. If $X$ is finite and each iteration is guaranteed to improve some objective function, then the local search algorithm is guaranteed to terminate and converge to one of the local optimal solutions. However, it usually does not converge quickly. Neither is it guaranteed to provide a good approximation to the global optimal solution. To mitigate this shortcoming, we can run the local search multiple times with randomly chosen starting point, and return the best local optimal solution found. Different definition of neighborhood result in different local optimal solutions. In general bigger neighborhoods leads to fewer local optimal solutions, but makes it more difficult to verify local optimality, which is a quality-speed trade-off worthy of some tuning.
+\subsection{Maximum Cut Problem}
+\begin{description}
+\Input{An undirected graph $G(V,E)$.}
+\Output{A cut $(A,B)$ that maximizes the number of crossing edges.}
+\end{description}
+If the graph is a bipartite graph, the problem is solvable within linear time via BFS. Just start from any vertex and mark vertices reachable from it with odd number of steps with 1 and the rest with 0, then we obtain the maximum cut. However, in general this is an NP complete problem. We will introduce a local search algorithm that solves the problem.
+
+For any cut $(A,B)$ and a vertex $v$, define 
+\begin{description}
+\item[$c_v(A,B)$]number of edges incident on $v$ that crosses $(A,B)$.
+\item[$d_v(A,B)$]number of edges incident on $v$ that do not cross $(A,B)$.
+\end{description}
+Then we have the local search algorithm shown in Algorithm \ref{maxcutlocalsearch}.
+
+\begin{algorithm}[ht]
+\caption{Local Search of Maximum Cut}\label{maxcutlocalsearch}
+\begin{algorithmic}[1]
+\State{Let $(A,B)$ be an arbitrary cut of $G$.}
+\While{there is a vertex $v$ with $d_v(A,B)>c_v(A,B)$}
+\State{Move $v$ to the other side of the cut.}
+\EndWhile
+\State{Return the final cut $(A,B)$.}
+\end{algorithmic}
+\end{algorithm}
+For graphs containing no parallel edges, the algorithm terminates within $\binom{n}{2}$ iterations because there are at most $\binom{n}{2}$ edges, and the number of crossing edges always increase by at least 1 before the algorithm converges. Hence the algorithm completes in polynomial time. 
+
+In the output cut, we have $d_v(A,B)\leq c_v(A,B),\forall v\in V$. Hence 
+\begin{align*}
+\sum_vd_v(A,B)\leq \sum_vc_v(A,B).
+\end{align*}
+The lhs counts each non-crossing edge twice, while the rhs counts each crossing edge twice, thus 
+\begin{align*}
+2\cdot(\text{num of non-crossing edge})&\leq 2\cdot(\text{num of crossing edge})\\
+&=2\cdot(\lvert E\rvert-\text{num of crossing edge})
+\end{align*}
+As a result, we have 
+$$\text{num of non-crossing edge}\leq\frac{1}{2}\lvert E\rvert,$$ i.e. Algorithm \ref{maxcutlocalsearch} outputs a cut in which the number of crossing edges is at least $\frac{1}{2}\lvert E\rvert$, which is not at all an impressive performance guarantee because a the expectation of the number of crossing edges of a random cut is already $\frac{1}{2}\lvert E\rvert$.
+
+In a more general case, each $e\in E$ has a non-negative weight $w_e$, and the aim of the problem becomes to maximize the total weight of the crossing edges. The local search algorithm is still well defined, and there is a similar 50\% performance guarantee. However, the algorithm is no longer guaranteed to converge in polynomial time, because the number of crossing edges is no longer guaranteed to increase in each iteration. The number of iterations can be exponential.
 \subsection{The 2SAT Problem}
-\subsection{Random Walks on a Line}
-\subsection{Papadimitriou's Algorithm}
+\begin{description}
+\Input{$n$ boolean variables $x_i,i=1,2,\dots,n$. $m$ clauses of 2 literals each.}
+\Output{Whether there exists an assignment to all $x_i$ that simultaneously satisfies all clauses.}
+\end{description}
+One example of the clauses with $n=m=4$ is $(x_1\lor x_2)\land(\neg x_1\lor x_3)\land(x_3\lor x_4)\land(\neg x_2\lor\neg x_4)$.
+
+The 2SAT problem is a special case of the CSP that can be solved in polynomial time\footnote{It can be reduced to computing SCCs.}. 3SAT is on the contrary NP complete. We will analyze a random local search algorithm that solves the 2SAT problem, as shown in Algorithm \ref{twosatlocalsearch}.
+\begin{algorithm}[ht]
+\caption{Paradimitriou's Local Search 2SAT Algorithm}\label{twosatlocalsearch}
+\begin{algorithmic}[1]
+\For{$i=1$ \textbf{to} $\log n$}
+\State{Choose a random initial assignment.}
+\For{$j=1$ \textbf{to} $2n^2$}
+\If{current assignment satisfies all clauses}
+\State{Return this assignment}
+\Else\State{Pick an arbitrary unsatisfied clause and flip the value of one of its two variables.}
+\EndIf\EndFor\EndFor
+\State{Report non-existence of such an assignment.}
+\end{algorithmic}
+\end{algorithm}
+Obviously the algorithm runs in polynomial time and is always correct when there exists no satisfactory assignment. Nonetheless its performance guarantee is not trivial when such assignment exists.
+
+To analyze Paradimitriou's algorithm, we need to first consider the problem of random walks on non-negative integers. Starting at 0, the position goes up or down by 1 at each step with 50/50 probability, except when the current position is 0, in which case we can only go to 1 with 100\% probability. Let $T_n$ represent the number of steps until the random walk reaches position $n$. 
+\begin{theorem}
+$E(T_n)=n^2$
+\end{theorem}
+\begin{proof}
+Let $Z_i$ represent the number of steps needed to get from $i$ to $n$. Then we have
+\begin{align*}
+E(Z_n)&=0\\
+E(Z_0)&=E(Z_1)+1\\
+E(Z_i)&=\frac{1}{2}E(Z_{i+1})+\frac{1}{2}E(Z_{i-1})+1,\forall i\geq 1
+\end{align*}
+Therefore we have
+\begin{equation*}
+E(Z_i)-E(Z_{i+1})=E(Z_{i-1})-E(Z_i)+2,\forall i\geq 1,
+\end{equation*}
+which leads to 
+\begin{align*}
+E(Z_i)-E(Z_{i+1})=2i+1,\forall i\geq 0\\
+\end{align*}
+As a result,
+\begin{align*}
+E(Z_0)-E(Z_n)=\sum\limits_{i=0}^{n-1}\left(E(Z_i)-E(Z_{i+1})\right)=n^2.
+\end{align*}
+Hence $E(T^n)=E(Z_0)=n^2.$
+\end{proof}
+\begin{corollary}\label{localsearchcorollary}
+$P\left(T_n>2n^2\right)<\frac{1}{2}$
+\end{corollary}
+\begin{proof}
+\begin{align*}
+n^2=E(T^n)&=\sum\limits_{i=0}^{2n^2}iP(T_n=i)+\sum\limits_{i=2n^2+1}^{\infty}iP(T_n=i)\\
+&\geq\sum\limits_{i=2n^2+1}^{\infty}iP(T_n=i)\\
+&>2n^2P\left(T_n>2n^2\right)\\
+\end{align*}
+Hence $P\left(T_n>2n^2\right)<\frac{1}{2}.$
+\end{proof}
+Now we can prove the following performance guarantee of Paradimitriou's local search algorithm.
+\begin{theorem}
+For a satisfiable 2SAT instance with $n$ variables, Paradimitriou's algorithm produces a satisfying assignment with probability $\geq 1-\frac{1}{n}$.
+\end{theorem}
+\begin{proof}
+Let's focus on one iteration of the outer loop. 
+
+Let $a^*$ represent an arbitrary satisfying assignment (there can be multiple such assignments), and let $a_t$ represent the assignment after $t$ iterations of the inner loop ($t=1,2,\dots,2n^2$). Let $\chi_t$ represent the number of variables on whose value $a^*$ and $a_t$ agree, thus $\chi_t$ is between 0 and $n$. 
+
+If $\chi_t\neq n$, then there must be at least one unsatisfied clause. Suppose the clause concerns $x_i$ and $x_j$. The consequence of flipping the value of $x_i$ \textbf{or} $x_j$ (choose randomly) is:
+\begin{itemize}
+\item If $a^*$ and $a_t$ disagree on both $x_i$ and $x_j$: $\chi_{t+1}=\chi_t+1$.
+\item If $a^*$ and $a_t$ disagree on one of $x_i$ and $x_j$:
+\begin{equation*}
+\chi_{t+1}=\begin{cases}
+\chi_t+1&(50\%\:possibility)\\
+\chi_t-1&(50\%\:possibility)\\
+\end{cases}
+\end{equation*}
+\end{itemize}
+There is an obvious analogy between the behavior of $\chi_t$ and the position in the random walks problem except:
+\begin{enumerate}
+\item Sometimes $\chi_t$ increases by 1 with possibility 100\%;
+\item The process may terminate before $\chi_t=n$ because there could be other viable assignment;
+\item Usually we start with $\chi_1>0$ instead of $\chi_1=0$: the miserable situation in which we start with the exact opposite of a satisfying assignment is rare. 
+\end{enumerate}
+All three differences only make it easier for the process to terminate correctly. Let $T$ represent the number of iterations needed inside each inner loop. According to Corollary \ref{localsearchcorollary}, we have $P(T>2n^2)<\frac{1}{2}$. Thus the probability that one iteration of the outer loop ends up with a satisfying assignment is at least $\frac{1}{2}$. With $\log n$ iterations, the probability that we end up with a correct solution is $\geq\frac{1}{2^{\log n}}=\frac{1}{n}.$
+
+
+\end{proof}
 \ifx\PREAMBLE\undefined
 \end{document}
 \fi
