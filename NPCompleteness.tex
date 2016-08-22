@@ -367,7 +367,7 @@ There is an obvious analogy between the behavior of $\chi_t$ and the position in
 \item The process may terminate before $\chi_t=n$ because there could be other viable assignments;
 \item Usually we start with $\chi_1>0$ instead of $\chi_1=0$: the miserable situation in which we start with the exact opposite of a satisfying assignment is rare. 
 \end{enumerate}
-All three differences only make it easier for the process to terminate correctly. Let $T$ represent the number of iterations needed inside each inner loop. According to Corollary \ref{localsearchcorollary}, we have $P(T>2n^2)<\frac{1}{2}$. Thus the probability that one iteration of the outer loop ends up with a satisfying assignment is at least $\frac{1}{2}$. With $\log n$ iterations, the probability that we end up with a correct solution is $\geq\frac{1}{2^{\log n}}=\frac{1}{n}.$
+All three differences only make it easier for the process to terminate correctly. Let $T$ represent the number of iterations needed inside each inner loop. According to Corollary \ref{localsearchcorollary}, we have $P(T>2n^2)<\frac{1}{2}$. Thus the probability that one iteration of the outer loop ends up with a satisfying assignment is at least $\frac{1}{2}$. With $\log n$ iterations, the probability that we end up with a correct solution is $\geq 1-\frac{1}{2^{\log n}}=1-\frac{1}{n}.$
 
 
 \end{proof}
