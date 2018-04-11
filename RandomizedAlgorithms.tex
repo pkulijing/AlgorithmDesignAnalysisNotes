@@ -243,9 +243,9 @@ Every comparison-based sorting algorithm has worst-case running time $\Omega(n\l
 \end{theorem}
 \begin{proof}
 Consider the action of a comparison-based sorting algorithm on an input composed of integers from 1 to $n$. There are totally $n!$ such inputs. Let $k$ be the minimum number of comparisons needed to address all these inputs. Each comparison has two possible results, thus $k$ comparisons have $2^k$ possible combinations of results. In order for all the $n!$ possible inputs to be sorted correctly, we must have
-$$2^k\leq n!,$$
+$$2^k\geq n!,$$
 because otherwise there would be at least 2 inputs that appeared the same for the comparison-based algorithm, according to the pigeonhole principle\footnote{Also named drawer principle}. Hence we have 
-$$k\leq\log(n!)<\log(n/2)^{n/2}=\frac{n}{2}\log\frac{n}{2},$$
+$$k\geq\log(n!)>\log(n/2)^{n/2}=\frac{n}{2}\log\frac{n}{2},$$
 which means that the running time of the algorithm is $\Omega(n\log n)$.
 
 
